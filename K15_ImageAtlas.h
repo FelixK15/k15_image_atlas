@@ -48,14 +48,14 @@ typedef struct _K15_IARect
 	kia_u16 posY;
 	kia_u16 width;
 	kia_u16 height;
-} K15_IARect; 
+} K15_IARect;
 
 typedef struct _K15_IAImageNode
 {
 	K15_IAPixelFormat pixelDataFormat;
 	K15_IARect rect;
 	kia_byte* pixelData;
-} K15_IAImageNode; 
+} K15_IAImageNode;
 
 typedef struct _K15_IASkyline
 {
@@ -118,7 +118,10 @@ kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPix
 	kia_byte* p_PixelData, kia_u32 p_PixelDataWidth, kia_u32 p_PixelDataHeight,
 	int* p_OutX, int* p_OutY);
 
-kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, unsigned char** p_OutPixelData, int* p_OutWidth, int* p_OutHeight);
+kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, int* p_OutWidth, int* p_OutHeight);
+kia_def void K15_IACopyImageAtlasPixelData(K15_ImageAtlas* p_ImageAtlas, kia_byte* p_DestinationPixelDataBuffer);
+kia_def void K15_IABakeAndCopyImageAtlas(K15_ImageAtlas* p_ImageAtlas, kia_byte* p_DestinationPixelDataBuffer,
+	int* p_OutWidth, int* p_OutHeight);
 
 #ifdef K15_IA_IMPLEMENTATION
 
@@ -256,8 +259,8 @@ kia_internal void K15_IAConvertPixel(kia_u8* p_SourcePixel, kia_u8* p_Destinatio
 	}
 	else if (p_SourcePixelFormat == KIA_PIXEL_FORMAT_R8G8B8)
 	{
-		kia_u8 greyscale = (kia_u8)((float)(p_SourcePixel[0]) * 0.21f + 
-			(float)(p_SourcePixel[1]) * 0.72f + 
+		kia_u8 greyscale = (kia_u8)((float)(p_SourcePixel[0]) * 0.21f +
+			(float)(p_SourcePixel[1]) * 0.72f +
 			(float)(p_SourcePixel[2]) * 0.07f);
 
 		if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8)
@@ -372,7 +375,7 @@ kia_internal void K15_IAFindWastedSpaceAndRemoveObscuredSkylines(K15_IASkyline* 
 	K15_IASkyline* skyline = 0;
 
 	for (kia_u32 skylineIndex = 0;
-	skylineIndex < numSkylines;
+		skylineIndex < numSkylines;
 		++skylineIndex)
 	{
 		skyline = p_Skylines + skylineIndex;
@@ -421,7 +424,7 @@ kia_internal kia_u32 K15_IAMergeSkylines(K15_IASkyline* p_Skylines, kia_u32 p_Nu
 	if (numSkylines > 1)
 	{
 		for (kia_u32 skylineIndex = 1;
-		skylineIndex < numSkylines;
+			skylineIndex < numSkylines;
 			++skylineIndex)
 		{
 			skyline = p_Skylines + skylineIndex;
@@ -496,7 +499,7 @@ kia_internal kia_result K15_IATryToGrowVirtualAtlasSize(K15_ImageAtlas* p_ImageA
 
 	//find skylines with pos == 0 (at the very bottom and extend their width)
 	for (kia_u32 skylineIndex = 0;
-	skylineIndex < numSkylines;
+		skylineIndex < numSkylines;
 		++skylineIndex)
 	{
 		K15_IASkyline* skyline = skylines + skylineIndex;
@@ -550,7 +553,7 @@ kia_internal kia_b8 K15_IACheckNodeCollision(K15_IAImageNode* p_ImageNodes, kia_
 	kia_s32 intersectionB = 0;
 
 	for (kia_u32 nodeIndex = 0;
-	nodeIndex < p_NumImageNodes;
+		nodeIndex < p_NumImageNodes;
 		++nodeIndex)
 	{
 		imageNode = p_ImageNodes + nodeIndex;
@@ -577,7 +580,7 @@ kia_u32 K15_IACalculatePlacementHeuristic(kia_u32 p_BaseLinePosX, kia_u32 p_Base
 	K15_IASkyline* skyline = 0;
 
 	for (kia_u32 skylineIndex = 0;
-	skylineIndex < p_NumSkylines;
+		skylineIndex < p_NumSkylines;
 		++skylineIndex)
 	{
 		skyline = p_Skylines + skylineIndex;
@@ -750,7 +753,7 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 	if (!fitsInWastedSpace)
 	{
 		for (kia_u32 skylineIndex = 0;
-		skylineIndex < numSkylines;
+			skylineIndex < numSkylines;
 			++skylineIndex)
 		{
 			K15_IASkyline* skyline = skylines + skylineIndex;
@@ -796,7 +799,7 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 			}
 			else
 			{
-				p_ImageAtlas->numSkylines = K15_IARemoveSkylineByIndex(skylines, numSkylines, 
+				p_ImageAtlas->numSkylines = K15_IARemoveSkylineByIndex(skylines, numSkylines,
 					position->elementIndex);
 			}
 
@@ -921,9 +924,9 @@ kia_def kia_u32 K15_IACalculateAtlasMemorySizeInBytes(kia_u32 p_NumImages, kia_u
 /*********************************************************************************/
 kia_def kia_u32 K15_IACalculateAtlasPixelDataSizeInBytes(K15_ImageAtlas* p_ImageAtlas)
 {
-	kia_u32 numPixels = p_MaxPixelHeight * p_MaxPixelWidth;
-	kia_u32 pixelDataSizeInBytes = numPixels * p_PixelFormat;
-	
+	kia_u32 numPixels = p_ImageAtlas->virtualPixelWidth * p_ImageAtlas->virtualPixelHeight;
+	kia_u32 pixelDataSizeInBytes = numPixels * p_ImageAtlas->pixelFormat;
+
 	return pixelDataSizeInBytes;
 }
 /*********************************************************************************/
@@ -979,7 +982,7 @@ kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPix
 	return result;
 }
 /*********************************************************************************/
-kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, unsigned char** p_OutPixelData, int* p_OutWidth, int* p_OutHeight)
+kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, int* p_OutWidth, int* p_OutHeight)
 {
 	if (!p_ImageAtlas)
 		return;
@@ -1028,7 +1031,7 @@ kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, unsigned char** 
 					imageNode->pixelData + sourcePixelIndex,
 					atlasPixelFormat, imageNode->pixelDataFormat,
 					imageStride);
-			
+
 				destinationPixelIndex += imageAtlasStride * atlasPixelFormat;
 				sourcePixelIndex += imageStride * nodePixelFormat;
 			}
@@ -1049,14 +1052,45 @@ kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, unsigned char** 
 		}
 	}
 
-	if (p_OutPixelData)
-		*p_OutPixelData = p_ImageAtlas->pixelData;
-
 	if (p_OutHeight)
 		*p_OutHeight = p_ImageAtlas->virtualPixelHeight;
 
 	if (p_OutWidth)
 		*p_OutWidth = p_ImageAtlas->virtualPixelWidth;
+}
+/*********************************************************************************/
+kia_def void K15_IACopyImageAtlasPixelData(K15_ImageAtlas* p_ImageAtlas, kia_byte* p_DestinationPixelDataBuffer)
+{
+	if (!p_ImageAtlas || !p_DestinationPixelDataBuffer)
+		return;
+
+	kia_u32 atlasHeight = p_ImageAtlas->virtualPixelHeight;
+	kia_u32 destinationPixelDataStride = p_ImageAtlas->virtualPixelWidth;
+	kia_u32 atlasStride = p_ImageAtlas->maxPixelWidth;
+	kia_byte* atlasPixelData = p_ImageAtlas->pixelData;
+	kia_u32 atlasPixelDataIndex = 0;
+	kia_u32 destinationPixelDataIndex = 0;
+
+	K15_IAPixelFormat atlasPixelFormat = p_ImageAtlas->pixelFormat;
+
+	for (kia_u32 strideIndex = 0;
+		strideIndex < atlasHeight;
+		++strideIndex)
+	{
+		K15_IA_MEMCPY(p_DestinationPixelDataBuffer + destinationPixelDataIndex,
+			atlasPixelData + atlasPixelDataIndex,
+			destinationPixelDataStride * atlasPixelFormat);
+
+		atlasPixelDataIndex += atlasPixelFormat * atlasStride;
+		destinationPixelDataIndex += atlasPixelFormat * destinationPixelDataStride;
+	}
+}
+/*********************************************************************************/
+kia_def void K15_IABakeAndCopyImageAtlas(K15_ImageAtlas* p_ImageAtlas, kia_byte* p_DestinationPixelDataBuffer,
+	int* p_OutWidth, int* p_OutHeight)
+{
+	K15_IABakeImageAtlas(p_ImageAtlas, p_OutWidth, p_OutHeight);
+	K15_IACopyImageAtlasPixelData(p_ImageAtlas, p_DestinationPixelDataBuffer);
 }
 /*********************************************************************************/
 #endif //K15_IMAGE_ATLAS_IMPLEMENTATION
