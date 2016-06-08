@@ -585,8 +585,8 @@ kia_u32 K15_IACalculatePlacementHeuristic(kia_u32 p_BaseLinePosX, kia_u32 p_Base
 
 		if (skyline->baseLinePosX >= skyline->baseLinePosX && skyline->baseLinePosX < p_BaseLinePosX + p_NodeWidth)
 		{
-			kia_u32 right = min(skyline->baseLinePosX + skyline->baseLineWidth, p_BaseLinePosX + p_NodeWidth);
-			kia_u32 left = max(skyline->baseLinePosX, p_BaseLinePosX);
+			kia_u32 right = K15_IA_MIN(skyline->baseLinePosX + skyline->baseLineWidth, p_BaseLinePosX + p_NodeWidth);
+			kia_u32 left = K15_IA_MAX(skyline->baseLinePosX, p_BaseLinePosX);
 
 			kia_u32 width = right - left;
 			kia_u32 height = p_BaseLinePosY - skyline->baseLinePosY;
