@@ -100,6 +100,8 @@ kia_def kia_result K15_IACreateAtlasWithCustomMemory(K15_ImageAtlas* p_OutImageA
 kia_def kia_u32 K15_IACalculateAtlasMemorySizeInBytes(kia_u32 p_NumImages, kia_u32 p_MaxPixelWidth,
 	kia_u32 p_MaxPixelHeight, K15_IAPixelFormat p_PixelFormat);
 
+kia_def kia_u32 K15_IACalculateAtlasPixelDataSizeInBytes(K15_ImageAtlas* p_ImageAtlas);
+
 //Free a previously created atlas (K15_IACreateAtlas). Deallocates all memory associated with 
 //an image atlas.
 kia_def void K15_IAFreeAtlas(K15_ImageAtlas* p_ImageAtlas);
@@ -915,6 +917,14 @@ kia_def kia_u32 K15_IACalculateAtlasMemorySizeInBytes(kia_u32 p_NumImages, kia_u
 	kia_u32 wastedSpaceRectsSizeInBytes = K15_IA_MAX_WASTED_SPACE_RECTS * sizeof(K15_IARect);
 
 	return pixelDataSizeInBytes + imageNodeDataSizeInBytes + skylineDataSizeInBytes + wastedSpaceRectsSizeInBytes;
+}
+/*********************************************************************************/
+kia_def kia_u32 K15_IACalculateAtlasPixelDataSizeInBytes(K15_ImageAtlas* p_ImageAtlas)
+{
+	kia_u32 numPixels = p_MaxPixelHeight * p_MaxPixelWidth;
+	kia_u32 pixelDataSizeInBytes = numPixels * p_PixelFormat;
+	
+	return pixelDataSizeInBytes;
 }
 /*********************************************************************************/
 kia_def void K15_IAFreeAtlas(K15_ImageAtlas* p_ImageAtlas)
