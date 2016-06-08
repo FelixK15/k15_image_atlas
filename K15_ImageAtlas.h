@@ -7,9 +7,6 @@
 # define kia_def extern
 #endif //K15_IA_STATIC
 
-//TODO:
-// Pixel Data Conversion
-
 typedef signed int kia_s32;
 typedef unsigned int kia_u32;
 typedef unsigned short kia_u16;
