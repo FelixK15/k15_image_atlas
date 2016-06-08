@@ -25,15 +25,15 @@ enum _K15_IAAtlasFlags
 enum _K15_IANodeFlags
 {
 	KIA_ADDED_TO_ATLAS_FLAG = 0x01,
-	KIA_ROOT_NODE_FLAG		= 0x02
+	KIA_ROOT_NODE_FLAG = 0x02
 };
 
 typedef enum _K15_IAPixelFormat
 {
-	KIA_PIXEL_FORMAT_R8			= 1,
-	KIA_PIXEL_FORMAT_R8A8		= 2,
-	KIA_PIXEL_FORMAT_R8G8B8		= 3,
-	KIA_PIXEL_FORMAT_R8G8B8A8	= 4
+	KIA_PIXEL_FORMAT_R8 = 1,
+	KIA_PIXEL_FORMAT_R8A8 = 2,
+	KIA_PIXEL_FORMAT_R8G8B8 = 3,
+	KIA_PIXEL_FORMAT_R8G8B8A8 = 4
 } K15_IAPixelFormat;
 
 typedef enum _K15_AtlasResults
@@ -86,7 +86,7 @@ typedef struct _K15_ImageAtlas
 
 	kia_u32 virtualPixelWidth;
 	kia_u32 virtualPixelHeight;
-	
+
 	kia_u32 numSkylines;
 	kia_u32 numImageNodes;
 	kia_u32 numWastedSpaceRects;
@@ -134,12 +134,12 @@ kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPix
 #endif //K15_IA_MAX_SKYLINES 
 
 #ifndef K15_IA_MAX_WASTED_SPACE_RECTS 
-# define K15_IA_MAX_WASTED_SPACE_RECTS 100
+# define K15_IA_MAX_WASTED_SPACE_RECTS 400
 #endif //K15_IA_MAX_WASTED_SPACE_RECTS 
 
 #define K15_IA_ACCESS_MAP_FREE 0x00
 #define K15_IA_ACCESS_MAP_OCCUPIED 0xFF
- 
+
 #ifndef K15_IA_DEFAULT_MAX_ATLAS_DIMENSION
 # define K15_IA_DEFAULT_MAX_ATLAS_DIMENSION 2048
 #endif //K15_IA_DEFAULT_MAX_ATLAS_DIMENSION
@@ -237,7 +237,7 @@ kia_internal kia_result K15_IAConvertPixelData(kia_byte* p_SourcePixelData, kia_
 
 	//convert pixel by pixel
 	for (kia_u32 pixelIndex = 0;
-		pixelIndex < numPixels;
+	pixelIndex < numPixels;
 		++pixelIndex)
 	{
 		//TODO
@@ -246,7 +246,7 @@ kia_internal kia_result K15_IAConvertPixelData(kia_byte* p_SourcePixelData, kia_
 	return K15_IA_RESULT_SUCCESS;
 }
 /*********************************************************************************/
-kia_internal kia_u32 K15_IARemoveSkylineByIndex(K15_IASkyline* p_Skylines, kia_u32 p_NumSkylines, 
+kia_internal kia_u32 K15_IARemoveSkylineByIndex(K15_IASkyline* p_Skylines, kia_u32 p_NumSkylines,
 	kia_u32 p_SkylineIndex)
 {
 	kia_u32 numSkylines = p_NumSkylines;
@@ -254,7 +254,7 @@ kia_internal kia_u32 K15_IARemoveSkylineByIndex(K15_IASkyline* p_Skylines, kia_u
 	if (p_SkylineIndex + 1 < numSkylines)
 	{
 		kia_u32 numSkylinesToMove = numSkylines - p_SkylineIndex;
-		K15_IA_MEMMOVE(p_Skylines + p_SkylineIndex, p_Skylines + p_SkylineIndex + 1, 
+		K15_IA_MEMMOVE(p_Skylines + p_SkylineIndex, p_Skylines + p_SkylineIndex + 1,
 			numSkylinesToMove * sizeof(K15_IASkyline));
 	}
 
@@ -264,17 +264,18 @@ kia_internal kia_u32 K15_IARemoveSkylineByIndex(K15_IASkyline* p_Skylines, kia_u
 kia_internal kia_u32 K15_IAAddWastedSpaceRect(K15_IARect* p_WastedSpaceRects, kia_u32 p_NumWastedSpaceRects,
 	kia_u32 p_PosX, kia_u32 p_PosY, kia_u32 p_Width, kia_u32 p_Height)
 {
-	kia_u32 numWastedSpaceRects = p_NumWastedSpaceRects;
+	if (p_NumWastedSpaceRects == K15_IA_MAX_WASTED_SPACE_RECTS)
+		return p_NumWastedSpaceRects;
 
-	p_WastedSpaceRects[numWastedSpaceRects].posX = p_PosX;
-	p_WastedSpaceRects[numWastedSpaceRects].posY = p_PosY;
-	p_WastedSpaceRects[numWastedSpaceRects].width = p_Width;
-	p_WastedSpaceRects[numWastedSpaceRects].height = p_Height;
+	p_WastedSpaceRects[p_NumWastedSpaceRects].posX = p_PosX;
+	p_WastedSpaceRects[p_NumWastedSpaceRects].posY = p_PosY;
+	p_WastedSpaceRects[p_NumWastedSpaceRects].width = p_Width;
+	p_WastedSpaceRects[p_NumWastedSpaceRects].height = p_Height;
 
-	return numWastedSpaceRects + 1;
+	return p_NumWastedSpaceRects + 1;
 }
 /*********************************************************************************/
-kia_internal void K15_IAFindWastedSpaceAndRemoveObscuredSkylines(K15_IASkyline* p_Skylines, 
+kia_internal void K15_IAFindWastedSpaceAndRemoveObscuredSkylines(K15_IASkyline* p_Skylines,
 	kia_u32* p_NumSkylinesOutIn, K15_IARect* p_WastedSpaceRects, kia_u32* p_NumWastedSpaceRectsOutIn,
 	kia_u32 p_PosX, kia_u32 p_PosY, kia_u32 p_Width)
 {
@@ -287,9 +288,9 @@ kia_internal void K15_IAFindWastedSpaceAndRemoveObscuredSkylines(K15_IASkyline* 
 	kia_u32 numWastedSpaceRects = *p_NumWastedSpaceRectsOutIn;
 
 	K15_IASkyline* skyline = 0;
-	
+
 	for (kia_u32 skylineIndex = 0;
-		skylineIndex < numSkylines;
+	skylineIndex < numSkylines;
 		++skylineIndex)
 	{
 		skyline = p_Skylines + skylineIndex;
@@ -338,7 +339,7 @@ kia_internal kia_u32 K15_IAMergeSkylines(K15_IASkyline* p_Skylines, kia_u32 p_Nu
 	if (numSkylines > 1)
 	{
 		for (kia_u32 skylineIndex = 1;
-			skylineIndex < numSkylines;
+		skylineIndex < numSkylines;
 			++skylineIndex)
 		{
 			skyline = p_Skylines + skylineIndex;
@@ -357,7 +358,7 @@ kia_internal kia_u32 K15_IAMergeSkylines(K15_IASkyline* p_Skylines, kia_u32 p_Nu
 	return numSkylines;
 }
 /*********************************************************************************/
-kia_internal kia_result K15_IATryToInsertSkyline(K15_ImageAtlas* p_ImageAtlas, kia_u32 p_BaseLineY, 
+kia_internal kia_result K15_IATryToInsertSkyline(K15_ImageAtlas* p_ImageAtlas, kia_u32 p_BaseLineY,
 	kia_u32 p_BaseLineX, kia_u32 p_BaseLineWidth)
 {
 	K15_IASkyline* skylines = p_ImageAtlas->skylines;
@@ -413,7 +414,7 @@ kia_internal kia_result K15_IATryToGrowVirtualAtlasSize(K15_ImageAtlas* p_ImageA
 
 	//find skylines with pos == 0 (at the very bottom and extend their width)
 	for (kia_u32 skylineIndex = 0;
-		skylineIndex < numSkylines;
+	skylineIndex < numSkylines;
 		++skylineIndex)
 	{
 		K15_IASkyline* skyline = skylines + skylineIndex;
@@ -467,7 +468,7 @@ kia_internal kia_b8 K15_IACheckNodeCollision(K15_IAImageNode* p_ImageNodes, kia_
 	kia_s32 intersectionB = 0;
 
 	for (kia_u32 nodeIndex = 0;
-		nodeIndex < p_NumImageNodes;
+	nodeIndex < p_NumImageNodes;
 		++nodeIndex)
 	{
 		imageNode = p_ImageNodes + nodeIndex;
@@ -519,7 +520,7 @@ kia_internal kia_u32 K15_IARemoveOrTrimWastedSpaceRect(K15_IARect* p_WastedSpace
 	kia_u32 p_NumWastedSpaceRects, kia_u32 p_Index, kia_u32 p_Width, kia_u32 p_Height)
 {
 	K15_IARect* wastedSpaceRect = p_WastedSpaceRects + p_Index;
-	
+
 	if (wastedSpaceRect->width == p_Width &&
 		wastedSpaceRect->height > p_Height)
 	{
@@ -527,7 +528,7 @@ kia_internal kia_u32 K15_IARemoveOrTrimWastedSpaceRect(K15_IARect* p_WastedSpace
 		wastedSpaceRect->height -= p_Height;
 	}
 	else if (wastedSpaceRect->height == p_Height &&
-			 wastedSpaceRect->width > p_Width)
+		wastedSpaceRect->width > p_Width)
 	{
 		wastedSpaceRect->posX += p_Width;
 		wastedSpaceRect->width -= p_Width;
@@ -539,7 +540,7 @@ kia_internal kia_u32 K15_IARemoveOrTrimWastedSpaceRect(K15_IARect* p_WastedSpace
 
 		kia_u32 restHeight = wastedSpaceRect->height - p_Height;
 		kia_u32 restWidth = wastedSpaceRect->width - p_Width;
-		
+
 		kia_u32 posLowerX = wastedSpaceRect->posX;
 		kia_u32 posLowerY = wastedSpaceRect->posY + p_Height;
 		kia_u32 posRightX = wastedSpaceRect->posX + p_Width;
@@ -569,7 +570,7 @@ kia_internal kia_u32 K15_IARemoveOrTrimWastedSpaceRect(K15_IARect* p_WastedSpace
 			}
 		}
 	}
-	
+
 	return p_NumWastedSpaceRects;
 }
 /*********************************************************************************/
@@ -588,7 +589,7 @@ kia_internal kia_b8 K15_IATryToFitInWastedSpace(K15_IARect* p_WastedSpaceRects, 
 	K15_IARect* wastedSpaceRect = 0;
 	K15_IAPotentialPosition* potentialPosition = 0;
 	K15_IAPotentialPosition potentialPositions[maxPotentialPositions];
-	
+
 	for (kia_u32 rectIndex = 0;
 		rectIndex < numWastedSpaceRects;
 		++rectIndex)
@@ -628,7 +629,7 @@ kia_internal kia_b8 K15_IATryToFitInWastedSpace(K15_IARect* p_WastedSpaceRects, 
 		numWastedSpaceRects = K15_IARemoveOrTrimWastedSpaceRect(p_WastedSpaceRects,
 			numWastedSpaceRects, potentialPositions->elementIndex, nodeWidth, nodeHeight);
 	}
-	
+
 	*p_NumWastedSpaceRectsInOut = numWastedSpaceRects;
 
 	return fitIntoWastedSpace;
@@ -661,13 +662,13 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 	K15_IAPotentialPosition potentialPositions[maxPotentialPositions];
 	K15_IARect* wastedSpaceRects = p_ImageAtlas->wastedSpaceRects;
 
-	kia_b8 fitsInWastedSpace = K15_IATryToFitInWastedSpace(wastedSpaceRects, 
+	kia_b8 fitsInWastedSpace = K15_IATryToFitInWastedSpace(wastedSpaceRects,
 		&p_ImageAtlas->numWastedSpaceRects, p_NodeToInsert);
 
 	if (!fitsInWastedSpace)
 	{
 		for (kia_u32 skylineIndex = 0;
-			skylineIndex < numSkylines;
+		skylineIndex < numSkylines;
 			++skylineIndex)
 		{
 			K15_IASkyline* skyline = skylines + skylineIndex;
@@ -713,7 +714,8 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 			}
 			else
 			{
-				p_ImageAtlas->numSkylines = K15_IARemoveSkylineByIndex(skylines, numSkylines, position->elementIndex);
+				p_ImageAtlas->numSkylines = K15_IARemoveSkylineByIndex(skylines, numSkylines, 
+					position->elementIndex);
 			}
 
 			result = K15_IATryToInsertSkyline(p_ImageAtlas, p_NodeToInsert->rect.posY + p_NodeToInsert->rect.height,
@@ -738,7 +740,7 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 		//remove/trim any skylines that would be obscured by the new skyline
 		K15_IAFindWastedSpaceAndRemoveObscuredSkylines(skylines, &numSkylines,
 			wastedSpaceRects, &p_ImageAtlas->numWastedSpaceRects,
-			p_NodeToInsert->rect.posX, p_NodeToInsert->rect.posY, 
+			p_NodeToInsert->rect.posX, p_NodeToInsert->rect.posY,
 			p_NodeToInsert->rect.width);
 
 		p_ImageAtlas->numSkylines = numSkylines;
@@ -758,8 +760,8 @@ kia_def kia_result K15_IACreateAtlas(K15_ImageAtlas* p_OutTextureAtlas, K15_IAPi
 	if (p_NumImages == 0)
 		return K15_IA_RESULT_INVALID_ARGUMENTS;
 
-	kia_u32 memoryBufferSizeInBytes = K15_IACalculateAtlasMemorySizeInBytes(p_NumImages, 
-		K15_IA_DEFAULT_MAX_ATLAS_DIMENSION, K15_IA_DEFAULT_MAX_ATLAS_DIMENSION, 
+	kia_u32 memoryBufferSizeInBytes = K15_IACalculateAtlasMemorySizeInBytes(p_NumImages,
+		K15_IA_DEFAULT_MAX_ATLAS_DIMENSION, K15_IA_DEFAULT_MAX_ATLAS_DIMENSION,
 		p_PixelFormat);
 
 	kia_byte* memoryBuffer = (kia_byte*)K15_IA_MALLOC(memoryBufferSizeInBytes);
@@ -768,7 +770,7 @@ kia_def kia_result K15_IACreateAtlas(K15_ImageAtlas* p_OutTextureAtlas, K15_IAPi
 		return K15_IA_RESULT_OUT_OF_MEMORY;
 
 	kia_result result = K15_IACreateAtlasWithCustomMemory(p_OutTextureAtlas, p_PixelFormat,
-		p_NumImages, K15_IA_DEFAULT_MAX_ATLAS_DIMENSION, K15_IA_DEFAULT_MAX_ATLAS_DIMENSION, 
+		p_NumImages, K15_IA_DEFAULT_MAX_ATLAS_DIMENSION, K15_IA_DEFAULT_MAX_ATLAS_DIMENSION,
 		memoryBuffer);
 
 	if (result != K15_IA_RESULT_SUCCESS)
@@ -783,14 +785,14 @@ kia_def kia_result K15_IACreateAtlasWithCustomMemory(K15_ImageAtlas* p_OutImageA
 	kia_u32 p_NumImages, kia_u32 p_MaxPixelWidth, kia_u32 p_MaxPixelHeight, kia_byte* p_MemoryBuffer)
 {
 	if (!p_OutImageAtlas || p_NumImages == 0
-		|| p_MaxPixelHeight < K15_IA_DEFAULT_MIN_ATLAS_DIMENSION 
-		|| p_MaxPixelWidth < K15_IA_DEFAULT_MIN_ATLAS_DIMENSION 
+		|| p_MaxPixelHeight < K15_IA_DEFAULT_MIN_ATLAS_DIMENSION
+		|| p_MaxPixelWidth < K15_IA_DEFAULT_MIN_ATLAS_DIMENSION
 		|| !p_MemoryBuffer)
 	{
 		return K15_IA_RESULT_INVALID_ARGUMENTS;
 	}
 
-	kia_u32 memoryBufferSizeInBytes = K15_IACalculateAtlasMemorySizeInBytes(p_NumImages, 
+	kia_u32 memoryBufferSizeInBytes = K15_IACalculateAtlasMemorySizeInBytes(p_NumImages,
 		p_MaxPixelWidth, p_MaxPixelHeight, p_PixelFormat);
 
 	kia_u32 imageNodeMemoryBufferOffset = p_MaxPixelWidth * p_MaxPixelHeight * p_PixelFormat;
