@@ -118,7 +118,7 @@ kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPix
 	kia_byte* p_PixelData, kia_u32 p_PixelDataWidth, kia_u32 p_PixelDataHeight,
 	int* p_OutX, int* p_OutY);
 
-kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, int* p_OutWidth, int* p_OutHeight);
+kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, kia_byte** p_OutPixelData, int* p_OutWidth, int* p_OutHeight);
 
 #ifdef K15_IA_IMPLEMENTATION
 
@@ -979,7 +979,7 @@ kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPix
 	return result;
 }
 /*********************************************************************************/
-kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, int* p_OutWidth, int* p_OutHeight)
+kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, kia_byte** p_OutPixelData, int* p_OutWidth, int* p_OutHeight)
 {
 	if (!p_ImageAtlas)
 		return;
@@ -1048,6 +1048,9 @@ kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, int* p_OutWidth,
 			}
 		}
 	}
+
+	if (p_OutPixelData)
+		*p_OutPixelData = p_ImageAtlas->pixelData;
 
 	if (p_OutHeight)
 		*p_OutHeight = p_ImageAtlas->virtualPixelHeight;
