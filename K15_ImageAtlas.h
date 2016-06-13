@@ -7,11 +7,10 @@
 # define kia_def extern
 #endif //K15_IA_STATIC
 
-//TODO:
-// Pixel Data Conversion
-
 typedef signed int kia_s32;
 typedef unsigned int kia_u32;
+typedef unsigned short kia_u16;
+
 typedef unsigned char kia_u8;
 typedef unsigned char kia_b8;
 typedef unsigned char kia_byte;
@@ -22,12 +21,15 @@ enum _K15_IAAtlasFlags
 	KIA_FORCE_POWER_OF_TWO_DIMENSION = 0x02
 };
 
+<<<<<<< HEAD
 enum _K15_IANodeFlags
 {
 	KIA_ADDED_TO_ATLAS_FLAG = 0x01,
 	KIA_ROOT_NODE_FLAG = 0x02
 };
 
+=======
+>>>>>>> 2637689a5bf976a5bf847ec1e60c738994d92c12
 typedef enum _K15_IAPixelFormat
 {
 	KIA_PIXEL_FORMAT_R8 = 1,
@@ -51,10 +53,10 @@ typedef enum _K15_AtlasResults
 
 typedef struct _K15_IARect
 {
-	kia_u32 posX;
-	kia_u32 posY;
-	kia_u32 width;
-	kia_u32 height;
+	kia_u16 posX;
+	kia_u16 posY;
+	kia_u16 width;
+	kia_u16 height;
 } K15_IARect;
 
 typedef struct _K15_IAImageNode
@@ -62,13 +64,12 @@ typedef struct _K15_IAImageNode
 	K15_IAPixelFormat pixelDataFormat;
 	K15_IARect rect;
 	kia_byte* pixelData;
-	kia_u8 flags;
 } K15_IAImageNode;
 
 typedef struct _K15_IASkyline
 {
-	kia_u32 baseLinePosX;
-	kia_u32 baseLinePosY;
+	kia_u16 baseLinePosX;
+	kia_u16 baseLinePosY;
 	kia_u32 baseLineWidth;
 } K15_IASkyline;
 
@@ -88,9 +89,9 @@ typedef struct _K15_ImageAtlas
 	kia_u32 virtualPixelHeight;
 
 	kia_u32 numSkylines;
-	kia_u32 numImageNodes;
+	kia_u32 numMaxImageNodes;
 	kia_u32 numWastedSpaceRects;
-	kia_u32 imageNodeIndex;
+	kia_u32 numImageNodes;
 	kia_u8 flags;
 } K15_ImageAtlas;
 
@@ -108,6 +109,8 @@ kia_def kia_result K15_IACreateAtlasWithCustomMemory(K15_ImageAtlas* p_OutImageA
 kia_def kia_u32 K15_IACalculateAtlasMemorySizeInBytes(kia_u32 p_NumImages, kia_u32 p_MaxPixelWidth,
 	kia_u32 p_MaxPixelHeight, K15_IAPixelFormat p_PixelFormat);
 
+kia_def kia_u32 K15_IACalculateAtlasPixelDataSizeInBytes(K15_ImageAtlas* p_ImageAtlas);
+
 //Free a previously created atlas (K15_IACreateAtlas). Deallocates all memory associated with 
 //an image atlas.
 kia_def void K15_IAFreeAtlas(K15_ImageAtlas* p_ImageAtlas);
@@ -123,6 +126,11 @@ kia_def void K15_IAFreeAtlas(K15_ImageAtlas* p_ImageAtlas);
 kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPixelFormat p_PixelFormat,
 	kia_byte* p_PixelData, kia_u32 p_PixelDataWidth, kia_u32 p_PixelDataHeight,
 	int* p_OutX, int* p_OutY);
+
+kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, int* p_OutWidth, int* p_OutHeight);
+kia_def void K15_IACopyImageAtlasPixelData(K15_ImageAtlas* p_ImageAtlas, kia_byte* p_DestinationPixelDataBuffer);
+kia_def void K15_IABakeAndCopyImageAtlas(K15_ImageAtlas* p_ImageAtlas, kia_byte* p_DestinationPixelDataBuffer,
+	int* p_OutWidth, int* p_OutHeight);
 
 #ifdef K15_IA_IMPLEMENTATION
 
@@ -186,6 +194,14 @@ kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPix
 # define K15_IA_QSORT qsort
 #endif //K15_IA_QSORT
 
+#ifndef K15_IA_MIN
+# define K15_IA_MIN(a,b) ((a) < (b) ? (a) : (b))
+#endif //K15_IA_MIN
+
+#ifndef K15_IA_MAX
+# define K15_IA_MAX(a,b) ((a) > (b) ? (a) : (b))
+#endif //K15_IA_MAX
+
 #ifndef kia_internal
 # define kia_internal static
 #endif //kia_internal
@@ -218,29 +234,111 @@ kia_internal int K15_IASortPotentialPositionsByHeuristic(const void* p_PositionA
 
 
 /*********************************************************************************/
-kia_internal kia_result K15_IAConvertPixelData(kia_byte* p_SourcePixelData, kia_u8 p_SourceNumColorComponents,
-	kia_u8 p_DestinationNumColorComponents, kia_u32 p_PixelDataWidth, kia_u32 p_PixelDataHeight)
+kia_internal void K15_IAConvertPixel(kia_u8* p_SourcePixel, kia_u8* p_DestinationPixel,
+	K15_IAPixelFormat p_SourcePixelFormat, K15_IAPixelFormat p_DestinationPixelFormat)
 {
-	if (!p_SourcePixelData || p_SourceNumColorComponents == 0 || p_SourceNumColorComponents > 4 ||
-		p_DestinationNumColorComponents == 0 || p_DestinationNumColorComponents > 4 ||
-		p_PixelDataHeight == 0 || p_PixelDataWidth == 0)
+	if (p_SourcePixelFormat == KIA_PIXEL_FORMAT_R8)
+	{
+		for (kia_s32 colorIndex = 0;
+			colorIndex < p_DestinationPixelFormat;
+			++colorIndex)
+		{
+			p_DestinationPixel[colorIndex] = *p_SourcePixel;
+		}
+	}
+	else if (p_SourcePixelFormat == KIA_PIXEL_FORMAT_R8A8)
+	{
+		kia_u8 sourcePixel = (kia_u8)((float)p_SourcePixel[0] * (float)((p_SourcePixel[1]) / 255));
+
+		if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8)
+			p_DestinationPixel[0] = sourcePixel;
+		else if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8G8B8)
+		{
+			p_DestinationPixel[0] = sourcePixel;
+			p_DestinationPixel[1] = sourcePixel;
+			p_DestinationPixel[2] = sourcePixel;
+		}
+		else if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8G8B8A8)
+		{
+			p_DestinationPixel[0] = p_SourcePixel[0];
+			p_DestinationPixel[1] = p_SourcePixel[0];
+			p_DestinationPixel[2] = p_SourcePixel[0];
+			p_DestinationPixel[3] = p_SourcePixel[1];
+		}
+	}
+	else if (p_SourcePixelFormat == KIA_PIXEL_FORMAT_R8G8B8)
+	{
+		kia_u8 greyscale = (kia_u8)((float)(p_SourcePixel[0]) * 0.21f +
+			(float)(p_SourcePixel[1]) * 0.72f +
+			(float)(p_SourcePixel[2]) * 0.07f);
+
+		if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8)
+			p_DestinationPixel[0] = greyscale;
+		else if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8A8)
+		{
+			p_DestinationPixel[0] = greyscale;
+			p_DestinationPixel[1] = 255;
+		}
+		else if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8G8B8A8)
+		{
+			p_DestinationPixel[0] = p_SourcePixel[0];
+			p_DestinationPixel[1] = p_SourcePixel[1];
+			p_DestinationPixel[2] = p_SourcePixel[2];
+			p_DestinationPixel[3] = 255;
+		}
+	}
+	else if (p_SourcePixelFormat == KIA_PIXEL_FORMAT_R8G8B8A8)
+	{
+		kia_u8 greyscale = (kia_u8)((float)(p_SourcePixel[0]) * 0.21f +
+			(float)(p_SourcePixel[1]) * 0.72f +
+			(float)(p_SourcePixel[2]) * 0.07f);
+
+		float alpha = (float)(p_SourcePixel[3] / 255.f);
+		kia_u8 greyscaleWithAlpha = (kia_u8)((float)greyscale * alpha);
+
+		if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8)
+			p_DestinationPixel[0] = greyscaleWithAlpha;
+		else if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8A8)
+		{
+			p_DestinationPixel[0] = greyscale;
+			p_DestinationPixel[1] = p_SourcePixel[3];
+		}
+		else if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8G8B8)
+		{
+			p_DestinationPixel[0] = (kia_u8)((float)(p_SourcePixel[0]) * alpha);
+			p_DestinationPixel[1] = (kia_u8)((float)(p_SourcePixel[1]) * alpha);
+			p_DestinationPixel[2] = (kia_u8)((float)(p_SourcePixel[2]) * alpha);
+		}
+	}
+}
+/*********************************************************************************/
+kia_internal kia_result K15_IAConvertPixelData(kia_byte* p_DestinationPixelData, kia_byte* p_SourcePixelData,
+	K15_IAPixelFormat p_DestinationPixelFormat, K15_IAPixelFormat p_SourcePixelFormat,
+	kia_u32 p_PixelDataStride)
+{
+	if (!p_SourcePixelData || !p_DestinationPixelData || p_PixelDataStride == 0)
 	{
 		return K15_IA_RESULT_INVALID_ARGUMENTS;
 	}
 
-	kia_u32 numPixels = p_PixelDataWidth * p_PixelDataHeight;
-	kia_u32 destinationPixelDataSizeInBytes = p_DestinationNumColorComponents * numPixels;
-	kia_byte* destinationPixelData = (kia_byte*)K15_IA_MALLOC(destinationPixelDataSizeInBytes);
-
-	if (!destinationPixelData)
-		return K15_IA_RESULT_OUT_OF_MEMORY;
+	kia_u32 sourcePixelIndex = 0;
+	kia_u32 destinationPixelIndex = 0;
 
 	//convert pixel by pixel
 	for (kia_u32 pixelIndex = 0;
+<<<<<<< HEAD
 	pixelIndex < numPixels;
+=======
+		pixelIndex < p_PixelDataStride;
+>>>>>>> 2637689a5bf976a5bf847ec1e60c738994d92c12
 		++pixelIndex)
 	{
-		//TODO
+		sourcePixelIndex = pixelIndex * p_SourcePixelFormat;
+		destinationPixelIndex = pixelIndex * p_DestinationPixelFormat;
+
+		K15_IAConvertPixel(p_SourcePixelData + sourcePixelIndex,
+			p_DestinationPixelData + destinationPixelIndex,
+			p_SourcePixelFormat, p_DestinationPixelFormat);
 	}
 
 	return K15_IA_RESULT_SUCCESS;
@@ -473,10 +571,10 @@ kia_internal kia_b8 K15_IACheckNodeCollision(K15_IAImageNode* p_ImageNodes, kia_
 	{
 		imageNode = p_ImageNodes + nodeIndex;
 
-		intersectionL = max(p_PosX, imageNode->rect.posX);
-		intersectionT = max(p_PosY, imageNode->rect.posY);
-		intersectionR = min(p_PosX + p_Width, imageNode->rect.posX + imageNode->rect.width);
-		intersectionB = min(p_PosY + p_Height, imageNode->rect.posY + imageNode->rect.height);
+		intersectionL = K15_IA_MAX(p_PosX, imageNode->rect.posX);
+		intersectionT = K15_IA_MAX(p_PosY, imageNode->rect.posY);
+		intersectionR = K15_IA_MIN(p_PosX + p_Width, (kia_u32)(imageNode->rect.posX + imageNode->rect.width));
+		intersectionB = K15_IA_MIN(p_PosY + p_Height, (kia_u32)(imageNode->rect.posY + imageNode->rect.height));
 
 		if (intersectionL < intersectionR &&
 			intersectionT < intersectionB)
@@ -495,15 +593,15 @@ kia_u32 K15_IACalculatePlacementHeuristic(kia_u32 p_BaseLinePosX, kia_u32 p_Base
 	K15_IASkyline* skyline = 0;
 
 	for (kia_u32 skylineIndex = 0;
-	skylineIndex < p_NumSkylines;
+		skylineIndex < p_NumSkylines;
 		++skylineIndex)
 	{
 		skyline = p_Skylines + skylineIndex;
 
 		if (skyline->baseLinePosX >= skyline->baseLinePosX && skyline->baseLinePosX < p_BaseLinePosX + p_NodeWidth)
 		{
-			kia_u32 right = min(skyline->baseLinePosX + skyline->baseLineWidth, p_BaseLinePosX + p_NodeWidth);
-			kia_u32 left = max(skyline->baseLinePosX, p_BaseLinePosX);
+			kia_u32 right = K15_IA_MIN(skyline->baseLinePosX + skyline->baseLineWidth, p_BaseLinePosX + p_NodeWidth);
+			kia_u32 left = K15_IA_MAX(skyline->baseLinePosX, p_BaseLinePosX);
 
 			kia_u32 width = right - left;
 			kia_u32 height = p_BaseLinePosY - skyline->baseLinePosY;
@@ -640,7 +738,7 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 {
 	kia_result result = K15_IA_RESULT_ATLAS_TOO_SMALL;
 	kia_u32 numSkylines = p_ImageAtlas->numSkylines;
-	kia_u32 numImageNodes = p_ImageAtlas->imageNodeIndex;
+	kia_u32 numImageNodes = p_ImageAtlas->numImageNodes;
 	kia_u32 numWastedSpaceRects = p_ImageAtlas->numWastedSpaceRects;
 	kia_u32 virtualHeight = p_ImageAtlas->virtualPixelHeight;
 	kia_u32 virtualWidth = p_ImageAtlas->virtualPixelWidth;
@@ -714,7 +812,11 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 			}
 			else
 			{
+<<<<<<< HEAD
 				p_ImageAtlas->numSkylines = K15_IARemoveSkylineByIndex(skylines, numSkylines, 
+=======
+				p_ImageAtlas->numSkylines = K15_IARemoveSkylineByIndex(skylines, numSkylines,
+>>>>>>> 2637689a5bf976a5bf847ec1e60c738994d92c12
 					position->elementIndex);
 			}
 
@@ -809,9 +911,9 @@ kia_def kia_result K15_IACreateAtlasWithCustomMemory(K15_ImageAtlas* p_OutImageA
 	atlas.maxPixelWidth = p_MaxPixelWidth;
 	atlas.pixelFormat = p_PixelFormat;
 	atlas.pixelData = p_MemoryBuffer;
-	atlas.numImageNodes = p_NumImages;
 	atlas.numWastedSpaceRects = 0;
-	atlas.imageNodeIndex = 0;
+	atlas.numMaxImageNodes = p_NumImages;
+	atlas.numImageNodes = 0;
 	atlas.numSkylines = 0;
 	atlas.imageNodes = (K15_IAImageNode*)(p_MemoryBuffer + imageNodeMemoryBufferOffset);
 	atlas.skylines = (K15_IASkyline*)(p_MemoryBuffer + skylineMemoryBufferOffset);
@@ -837,6 +939,14 @@ kia_def kia_u32 K15_IACalculateAtlasMemorySizeInBytes(kia_u32 p_NumImages, kia_u
 	return pixelDataSizeInBytes + imageNodeDataSizeInBytes + skylineDataSizeInBytes + wastedSpaceRectsSizeInBytes;
 }
 /*********************************************************************************/
+kia_def kia_u32 K15_IACalculateAtlasPixelDataSizeInBytes(K15_ImageAtlas* p_ImageAtlas)
+{
+	kia_u32 numPixels = p_ImageAtlas->virtualPixelWidth * p_ImageAtlas->virtualPixelHeight;
+	kia_u32 pixelDataSizeInBytes = numPixels * p_ImageAtlas->pixelFormat;
+
+	return pixelDataSizeInBytes;
+}
+/*********************************************************************************/
 kia_def void K15_IAFreeAtlas(K15_ImageAtlas* p_ImageAtlas)
 {
 	if (!p_ImageAtlas)
@@ -856,13 +966,13 @@ kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPix
 		return K15_IA_RESULT_INVALID_ARGUMENTS;
 	}
 
-	if (p_ImageAtlas->imageNodeIndex == p_ImageAtlas->numImageNodes)
+	if (p_ImageAtlas->numImageNodes == p_ImageAtlas->numMaxImageNodes)
 		return K15_IA_RESULT_OUT_OF_RANGE;
 
 	kia_result result = K15_IA_RESULT_ATLAS_TOO_SMALL;
 	kia_result growResult = K15_IA_RESULT_SUCCESS;
 
-	kia_u32 imageNodeIndex = p_ImageAtlas->imageNodeIndex;
+	kia_u32 imageNodeIndex = p_ImageAtlas->numImageNodes;
 	K15_IAImageNode* imageNode = p_ImageAtlas->imageNodes + imageNodeIndex;
 
 	imageNode->pixelData = p_PixelData;
@@ -884,9 +994,120 @@ kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPix
 	}
 
 	if (result == K15_IA_RESULT_SUCCESS)
-		++p_ImageAtlas->imageNodeIndex;
+		++p_ImageAtlas->numImageNodes;
 
 	return result;
+}
+/*********************************************************************************/
+kia_def void K15_IABakeImageAtlas(K15_ImageAtlas* p_ImageAtlas, int* p_OutWidth, int* p_OutHeight)
+{
+	if (!p_ImageAtlas)
+		return;
+
+	kia_u32 destinationPixelIndex = 0;
+	kia_u32 sourcePixelIndex = 0;
+
+	kia_u32 imageHeight = 0;
+	kia_u32 imageStride = 0;
+	kia_u32 imagePosX = 0;
+	kia_u32 imagePosY = 0;
+
+	kia_u32 numImageNodes = p_ImageAtlas->numImageNodes;
+	kia_u32 imageAtlasStride = p_ImageAtlas->maxPixelWidth;
+
+	K15_IAImageNode* imageNodes = p_ImageAtlas->imageNodes;
+	K15_IAPixelFormat atlasPixelFormat = p_ImageAtlas->pixelFormat;
+	K15_IAPixelFormat nodePixelFormat = KIA_PIXEL_FORMAT_R8;
+
+	K15_IAImageNode* imageNode = 0;
+	kia_u8* atlasPixelData = p_ImageAtlas->pixelData;
+
+	for (kia_u32 nodeIndex = 0;
+		nodeIndex < numImageNodes;
+		++nodeIndex)
+	{
+		imageNode = imageNodes + nodeIndex;
+
+		imageStride = imageNode->rect.width;
+		imageHeight = imageNode->rect.height;
+		imagePosX = imageNode->rect.posX;
+		imagePosY = imageNode->rect.posY;
+		nodePixelFormat = imageNode->pixelDataFormat;
+
+		destinationPixelIndex = (imagePosX + (imagePosY * imageAtlasStride)) * atlasPixelFormat;
+		sourcePixelIndex = 0;
+
+		//conversion needed?
+		if (imageNode->pixelDataFormat != atlasPixelFormat)
+		{
+			for (kia_u32 strideIndex = 0;
+				strideIndex < imageHeight;
+				++strideIndex)
+			{
+				K15_IAConvertPixelData(atlasPixelData + destinationPixelIndex,
+					imageNode->pixelData + sourcePixelIndex,
+					atlasPixelFormat, imageNode->pixelDataFormat,
+					imageStride);
+
+				destinationPixelIndex += imageAtlasStride * atlasPixelFormat;
+				sourcePixelIndex += imageStride * nodePixelFormat;
+			}
+		}
+		else
+		{
+			for (kia_u32 strideIndex = 0;
+				strideIndex < imageHeight;
+				++strideIndex)
+			{
+				K15_IA_MEMCPY(atlasPixelData + destinationPixelIndex,
+					imageNode->pixelData + sourcePixelIndex,
+					imageStride * atlasPixelFormat);
+
+				destinationPixelIndex += imageAtlasStride * atlasPixelFormat;
+				sourcePixelIndex += imageStride * nodePixelFormat;
+			}
+		}
+	}
+
+	if (p_OutHeight)
+		*p_OutHeight = p_ImageAtlas->virtualPixelHeight;
+
+	if (p_OutWidth)
+		*p_OutWidth = p_ImageAtlas->virtualPixelWidth;
+}
+/*********************************************************************************/
+kia_def void K15_IACopyImageAtlasPixelData(K15_ImageAtlas* p_ImageAtlas, kia_byte* p_DestinationPixelDataBuffer)
+{
+	if (!p_ImageAtlas || !p_DestinationPixelDataBuffer)
+		return;
+
+	kia_u32 atlasHeight = p_ImageAtlas->virtualPixelHeight;
+	kia_u32 destinationPixelDataStride = p_ImageAtlas->virtualPixelWidth;
+	kia_u32 atlasStride = p_ImageAtlas->maxPixelWidth;
+	kia_byte* atlasPixelData = p_ImageAtlas->pixelData;
+	kia_u32 atlasPixelDataIndex = 0;
+	kia_u32 destinationPixelDataIndex = 0;
+
+	K15_IAPixelFormat atlasPixelFormat = p_ImageAtlas->pixelFormat;
+
+	for (kia_u32 strideIndex = 0;
+		strideIndex < atlasHeight;
+		++strideIndex)
+	{
+		K15_IA_MEMCPY(p_DestinationPixelDataBuffer + destinationPixelDataIndex,
+			atlasPixelData + atlasPixelDataIndex,
+			destinationPixelDataStride * atlasPixelFormat);
+
+		atlasPixelDataIndex += atlasPixelFormat * atlasStride;
+		destinationPixelDataIndex += atlasPixelFormat * destinationPixelDataStride;
+	}
+}
+/*********************************************************************************/
+kia_def void K15_IABakeAndCopyImageAtlas(K15_ImageAtlas* p_ImageAtlas, kia_byte* p_DestinationPixelDataBuffer,
+	int* p_OutWidth, int* p_OutHeight)
+{
+	K15_IABakeImageAtlas(p_ImageAtlas, p_OutWidth, p_OutHeight);
+	K15_IACopyImageAtlasPixelData(p_ImageAtlas, p_DestinationPixelDataBuffer);
 }
 /*********************************************************************************/
 #endif //K15_IMAGE_ATLAS_IMPLEMENTATION
