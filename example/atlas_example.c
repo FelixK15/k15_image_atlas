@@ -4,7 +4,7 @@
 
 #define K15_IA_IMPLEMENTATION
 #define K15_IA_DEFAULT_MAX_ATLAS_DIMENSION 512
-#include "K15_ImageAtlas.h"
+#include "../K15_ImageAtlas.h"
 
 #pragma comment(lib, "kernel32.lib")
 #pragma comment(lib, "user32.lib")
