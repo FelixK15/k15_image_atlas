@@ -3,7 +3,6 @@
 #include <time.h>
 
 #define K15_IA_IMPLEMENTATION
-#define K15_IA_DEFAULT_MAX_ATLAS_DIMENSION 512
 #include "../K15_ImageAtlas.h"
 
 #pragma comment(lib, "kernel32.lib")
@@ -239,10 +238,10 @@ void setup(HWND p_HWND)
 
 	SelectObject(backbufferDC, backbufferBitmap);
 
-	if (K15_IACreateAtlas(&atlas, KIA_PIXEL_FORMAT_R8G8B8A8, numNodes) != K15_IA_RESULT_SUCCESS)
+	if (K15_IACreateAtlas(&atlas, numNodes) != K15_IA_RESULT_SUCCESS)
 		MessageBox(0, "Error creating atlas!", "Error", 0);
 
-	if (K15_IACreateAtlas(&lastAtlas, KIA_PIXEL_FORMAT_R8G8B8A8, numNodes) != K15_IA_RESULT_SUCCESS)
+	if (K15_IACreateAtlas(&lastAtlas, numNodes) != K15_IA_RESULT_SUCCESS)
 		MessageBox(0, "Error creating atlas!", "Error", 0);
 
 	redPen = CreatePen(0, 1, RGB(255, 0, 0));
@@ -277,10 +276,8 @@ void swapBuffers(HWND p_HWND)
 
 void doFrame(HWND p_HWND)
 {
-	uint32 deltaVirtualHeight = screenHeight - atlas.virtualPixelHeight;
-	uint32 deltaVirtualWidth = screenWidth - atlas.virtualPixelWidth;
-	uint32 deltaHeight = screenHeight - atlas.maxPixelHeight;
-	uint32 deltaWidth = screenWidth - atlas.maxPixelWidth;
+	uint32 deltaHeight = screenHeight - atlas.height;
+	uint32 deltaWidth = screenWidth - atlas.width;
 
 	if (pressedLastFrame && insertedNodes != numNodes)
 	{
@@ -299,9 +296,6 @@ void doFrame(HWND p_HWND)
 	SelectObject(backbufferDC, greenPen);
 	Rectangle(backbufferDC, deltaWidth / 2, deltaHeight / 2, screenWidth - deltaWidth / 2, screenHeight - deltaHeight / 2);
 
-	SelectObject(backbufferDC, redPen);
-	Rectangle(backbufferDC, deltaVirtualWidth / 2, deltaVirtualHeight / 2, screenWidth - deltaVirtualWidth / 2, screenHeight - deltaVirtualHeight / 2);
-
 	SelectObject(backbufferDC, whitePen);
 	for (uint32 nodeIndex = 0;
 	nodeIndex < insertedNodes;
@@ -309,8 +303,8 @@ void doFrame(HWND p_HWND)
 	{
 		HBRUSH tempBrush = CreateSolidBrush(RGB(24, 200, 200));
 		SelectObject(backbufferDC, tempBrush);
-		uint32 posX = deltaVirtualWidth / 2 + positions[nodeIndex].x;
-		uint32 posY = deltaVirtualHeight / 2 + positions[nodeIndex].y;
+		uint32 posX = deltaWidth / 2 + positions[nodeIndex].x;
+		uint32 posY = deltaHeight / 2 + positions[nodeIndex].y;
 		uint32 width = positions[nodeIndex].width;
 		uint32 height = positions[nodeIndex].height;
 
@@ -325,8 +319,8 @@ void doFrame(HWND p_HWND)
 	{
 		HBRUSH tempBrush = CreateSolidBrush(RGB(255, 200, 24));
 		SelectObject(backbufferDC, tempBrush);
-		uint32 posX = deltaVirtualWidth / 2 + atlas.wastedSpaceRects[rectIndex].posX;
-		uint32 posY = deltaVirtualHeight / 2 + atlas.wastedSpaceRects[rectIndex].posY;
+		uint32 posX = deltaWidth / 2 + atlas.wastedSpaceRects[rectIndex].posX;
+		uint32 posY = deltaHeight / 2 + atlas.wastedSpaceRects[rectIndex].posY;
 		uint32 width = atlas.wastedSpaceRects[rectIndex].width;
 		uint32 height = atlas.wastedSpaceRects[rectIndex].height;
 
@@ -341,8 +335,8 @@ void doFrame(HWND p_HWND)
 	{
 		K15_IASkyline* skyline = atlas.skylines + skylineIndex;
 
-		uint32 posX = skyline->baseLinePosX + deltaVirtualWidth / 2;
-		uint32 posY = skyline->baseLinePosY + deltaVirtualHeight / 2;
+		uint32 posX = skyline->baseLinePosX + deltaWidth / 2;
+		uint32 posY = skyline->baseLinePosY + deltaHeight / 2;
 
 		Rectangle(backbufferDC, posX, posY + 1, posX + skyline->baseLineWidth, posY);
 	}
@@ -350,20 +344,20 @@ void doFrame(HWND p_HWND)
 	RECT widthTextRect;
 	widthTextRect.left = screenWidth / 2 - 50;
 	widthTextRect.right = screenWidth / 2 + 50;
-	widthTextRect.top = deltaVirtualHeight / 2 - 30;
-	widthTextRect.bottom = deltaVirtualHeight / 2;
+	widthTextRect.top = deltaHeight / 2 - 30;
+	widthTextRect.bottom = deltaHeight / 2;
 
 	RECT heightTextRect;
-	heightTextRect.left = screenWidth / 2 + atlas.virtualPixelWidth / 2;
+	heightTextRect.left = screenWidth / 2 + atlas.width / 2;
 	heightTextRect.right = heightTextRect.left + 100;
 	heightTextRect.top = screenHeight / 2 - 20;
 	heightTextRect.bottom = screenHeight/ 2 + 20;
 
 	char buffer[256];
-	sprintf_s(buffer, 256, "Width: %dpx", atlas.virtualPixelWidth);
+	sprintf_s(buffer, 256, "Width: %dpx", atlas.width);
 	DrawTextA(backbufferDC, buffer, -1, &widthTextRect, DT_CENTER);
 
-	sprintf_s(buffer, 256, "Height: %dpx", atlas.virtualPixelHeight);
+	sprintf_s(buffer, 256, "Height: %dpx", atlas.height);
 	DrawTextA(backbufferDC, buffer, -1, &heightTextRect, DT_CENTER);
 
 	RECT textRect;
