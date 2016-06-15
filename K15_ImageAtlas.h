@@ -61,7 +61,8 @@ K15 Image Atlas v 1.0
 		Note: K15_IABakeImageAtlasIntoPixelBuffer does take a pixel format paramater.
 			  Pixel format conversion will happen on the fly if the pixel format
 			  specified differs from that of individual images (that got added
-			  by using K15_IAAddImageToAtlas).
+			  by using K15_IAAddImageToAtlas). Currently, the atlas
+			  will only grow by power of two dimensions.
 	
 	- You delete the image atlas to free previously allocated memory during
 	  K15_IACreateAtlas.
@@ -73,6 +74,9 @@ K15 Image Atlas v 1.0
 	  		  the data will be lost after calling this function. You basically
 	  		  only need to call this function if you created the atlas using
 	  		  K15_IACreateAtlas and thus triggered a memory allocation.
+
+	  		  If memory was allocated by K15_IA_MALLOC during K15_IACreateAtlas,
+	  		  the memory will be freed using K15_IA_FREE.
 
 # Example Usage
 {
@@ -95,7 +99,7 @@ K15 Image Atlas v 1.0
 		int imageHeight = imagesToAddHeights[imageIndex];
 		int imagePosX = 0;
 		int imagePosY = 0;
-	
+
 		K15_IAAddImageToAtlas(&atlas, KIA_PIXEL_FORMAT_R8G8B8, imageData,
 		 imageWidth, imageHeight, &imagePosX, &imagePosY);
 
@@ -143,7 +147,7 @@ typedef unsigned char kia_byte;
 enum _K15_IAAtlasFlags
 {
 	KIA_EXTERNAL_MEMORY_FLAG = 0x01,			//<! Memory was provided by the user (K15_IACreateAtlasWithCustomMemory)
-	KIA_FORCE_POWER_OF_TWO_DIMENSION = 0x02		//<! Not supported yet
+	KIA_FORCE_POWER_OF_TWO_DIMENSION = 0x02		//<! Currently used by default
 };
 
 typedef enum _K15_IAPixelFormat
@@ -238,7 +242,7 @@ kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPix
 //p_OutWidth and p_OutHeight parameters (can be NULL).
 //Note: If there's a mismatch between the pixel format specified (p_PixelFormat) and the 
 //		pixel format of individual images (specified in K15_IAAddImageToAtlas), pixel
-//		conversion will be happen on the fly to match the pixel format specified.
+//		conversion will happen on the fly to match the pixel format specified.
 kia_def void K15_IABakeImageAtlasIntoPixelBuffer(K15_ImageAtlas* p_ImageAtlas, K15_IAPixelFormat p_PixelFormat, 
 	void* p_DestinationPixelDataBuffer, int* p_OutWidth, int* p_OutHeight);
 
@@ -1061,7 +1065,7 @@ kia_def void K15_IAFreeAtlas(K15_ImageAtlas* p_ImageAtlas)
 }
 /*********************************************************************************/
 kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPixelFormat p_PixelFormat,
-	kia_byte* p_PixelData, kia_u32 p_PixelDataWidth, kia_u32 p_PixelDataHeight,
+	void* p_PixelData, kia_u32 p_PixelDataWidth, kia_u32 p_PixelDataHeight,
 	int* p_OutX, int* p_OutY)
 {
 	if (!p_ImageAtlas || !p_PixelData || p_PixelDataWidth == 0 || p_PixelDataHeight == 0 ||
@@ -1079,7 +1083,7 @@ kia_def kia_result K15_IAAddImageToAtlas(K15_ImageAtlas* p_ImageAtlas, K15_IAPix
 	kia_u32 imageNodeIndex = p_ImageAtlas->numImageNodes;
 	K15_IAImageNode* imageNode = p_ImageAtlas->imageNodes + imageNodeIndex;
 
-	imageNode->pixelData = p_PixelData;
+	imageNode->pixelData = (kia_byte*)p_PixelData;
 	imageNode->pixelDataFormat = p_PixelFormat;
 	imageNode->rect.height = p_PixelDataHeight;
 	imageNode->rect.width = p_PixelDataWidth;
@@ -1117,6 +1121,7 @@ kia_def void K15_IABakeImageAtlasIntoPixelBuffer(K15_ImageAtlas* p_ImageAtlas,
 	kia_u32 atlasPixelDataIndex = 0;
 	kia_u32 destinationPixelDataIndex = 0;
 	kia_u32 destinationPixelDataOffset = 0;
+ 	kia_u32 imageNodePixelDataOffset = 0;
 	kia_u32 numImageNodes = p_ImageAtlas->numImageNodes;
 	kia_u32 imageNodeWidth = 0;
 	kia_u32 imageNodeHeight = 0;
@@ -1141,7 +1146,8 @@ kia_def void K15_IABakeImageAtlasIntoPixelBuffer(K15_ImageAtlas* p_ImageAtlas,
 		imageNodePixelFormat = imageNode->pixelDataFormat;
 		imageNodePixelData = imageNode->pixelData;
 
-		destinationPixelDataOffset = imageNodePosX + (imageNodePosY * imageNodeWidth);
+		destinationPixelDataOffset = imageNodePosX + (imageNodePosY * atlasStride);
+    	imageNodePixelDataOffset = 0;
 
 		//Convert pixels if formats mismatch
 		if (imageNodePixelFormat != p_DestinationPixelFormat)
@@ -1151,10 +1157,11 @@ kia_def void K15_IABakeImageAtlasIntoPixelBuffer(K15_ImageAtlas* p_ImageAtlas,
 				++strideIndex)
 			{
 				K15_IAConvertPixelData(destinationPixelData + destinationPixelDataOffset,
-					imageNodePixelData, p_DestinationPixelFormat,
+					imageNodePixelData + imageNodePixelDataOffset, p_DestinationPixelFormat,
 					imageNodePixelFormat, imageNodeWidth);
 
 				destinationPixelDataOffset += p_DestinationPixelFormat * atlasStride;
+        		imageNodePixelDataOffset += imageNodePixelFormat * imageNodeWidth;
 			}
 		}
 		else
@@ -1164,9 +1171,10 @@ kia_def void K15_IABakeImageAtlasIntoPixelBuffer(K15_ImageAtlas* p_ImageAtlas,
 				++strideIndex)
 			{
 				K15_IA_MEMCPY(destinationPixelData + destinationPixelDataOffset,
-					imageNodePixelData, atlasStride * imageNodePixelFormat);
+					imageNodePixelData + imageNodePixelDataOffset, imageNodeWidth * imageNodePixelFormat);
 	
 				destinationPixelDataOffset += p_DestinationPixelFormat * atlasStride;
+        		imageNodePixelDataOffset += p_DestinationPixelFormat * imageNodeWidth;
 			}
 		}
 	}
