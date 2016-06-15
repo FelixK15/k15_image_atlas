@@ -1129,6 +1129,8 @@ kia_def void K15_IABakeImageAtlasIntoPixelBuffer(K15_ImageAtlas* p_ImageAtlas,
 	kia_u32 imageNodePosY = 0;
 	kia_byte* imageNodePixelData = 0;
 
+	K15_IA_MEMSET(destinationPixelData, 0, p_DestinationPixelFormat * atlasHeight * atlasStride);
+
 	K15_IAPixelFormat imageNodePixelFormat = KIA_PIXEL_FORMAT_R8;
 	K15_IAImageNode* imageNodes = p_ImageAtlas->imageNodes;
 	K15_IAImageNode* imageNode = 0;
