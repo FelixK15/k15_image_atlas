@@ -1148,7 +1148,7 @@ kia_def void K15_IABakeImageAtlasIntoPixelBuffer(K15_ImageAtlas* p_ImageAtlas,
 		imageNodePixelFormat = imageNode->pixelDataFormat;
 		imageNodePixelData = imageNode->pixelData;
 
-		destinationPixelDataOffset = imageNodePosX + (imageNodePosY * atlasStride);
+		destinationPixelDataOffset = (imageNodePosX + (imageNodePosY * atlasStride)) * p_DestinationPixelFormat;
     	imageNodePixelDataOffset = 0;
 
 		//Convert pixels if formats mismatch
