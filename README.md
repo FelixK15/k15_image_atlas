@@ -19,12 +19,12 @@ of the functions used into *one* of your C/CPP files. To do this you have to add
 This library does implement the 'Skyline Left-Bottom' packing algorithm. I implemented the algorithm roughly using the paper
 'A Skyline-Based Heuristic for the 2D Rectangular Strip Packing Problem' by Wei Lijun, Andrew Lim and Wenbin Zhu. 
 
-# Example #
+# Example Project #
 The example in the 'example' folder is currently Win32 only and currently only used for testing.  
 However, if you want to try it out, just execute the build.bat script (visual studio required).
 Pressing any key in the example app will add a new rectangle to the atlas.  
 
-## Basic C example ##
+# Basic C example #
 ```
 #!c
 const int numImagesToAdd = 256;
