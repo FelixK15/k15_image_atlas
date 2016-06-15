@@ -422,25 +422,25 @@ kia_internal void K15_IAConvertPixel(kia_u8* p_SourcePixel, kia_u8* p_Destinatio
 	}
 	else if (p_SourcePixelFormat == KIA_PIXEL_FORMAT_R8G8B8A8)
 	{
-		kia_u8 greyscale = (kia_u8)((float)(p_SourcePixel[0]) * 0.21f +
+		float greyscale = (float)(p_SourcePixel[0]) * 0.21f +
 			(float)(p_SourcePixel[1]) * 0.72f +
-			(float)(p_SourcePixel[2]) * 0.07f);
-
+			(float)(p_SourcePixel[2]) * 0.07f;
+    
 		float alpha = (float)(p_SourcePixel[3] / 255.f);
-		kia_u8 greyscaleWithAlpha = (kia_u8)((float)greyscale * alpha);
+		float greyscaleWithAlpha = greyscale * alpha;
 
 		if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8)
 			p_DestinationPixel[0] = greyscaleWithAlpha;
 		else if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8A8)
 		{
-			p_DestinationPixel[0] = greyscale;
+			p_DestinationPixel[0] = greyscale + 0.5f;
 			p_DestinationPixel[1] = p_SourcePixel[3];
 		}
 		else if (p_DestinationPixelFormat == KIA_PIXEL_FORMAT_R8G8B8)
 		{
-			p_DestinationPixel[0] = (kia_u8)((float)(p_SourcePixel[0]) * alpha);
-			p_DestinationPixel[1] = (kia_u8)((float)(p_SourcePixel[1]) * alpha);
-			p_DestinationPixel[2] = (kia_u8)((float)(p_SourcePixel[2]) * alpha);
+      p_DestinationPixel[0] = (kia_u8)((float)(p_SourcePixel[0]) * alpha);
+      p_DestinationPixel[1] = (kia_u8)((float)(p_SourcePixel[1]) * alpha);
+      p_DestinationPixel[2] = (kia_u8)((float)(p_SourcePixel[2]) * alpha);
 		}
 	}
 }
