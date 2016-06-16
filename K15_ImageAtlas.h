@@ -1,82 +1,85 @@
 /*
 K15 Image Atlas v 1.0
-- Single header public domain library
+	Single header public domain library
 
 # Author(s):
-- Felix Klinge (fklinge dot deck13 dot com)
+	Felix Klinge (fklinge dot deck13 dot com)
+
+# Version history
+	1.0 | 6/17/2016		-	Intial release 
 
 # What problem is this library trying to solve? (ELI5)
-- This library can be used to generate a single image that contains
-many, smaller images. The library will try to pack the smaller images
-as tightly as possible in a performant manner. This newly created
-image is often called an 'Atlas'. Hence the name of the library.
+	This library can be used to generate a single image that contains
+	many, smaller images. The library will try to pack the smaller images
+	as tightly as possible in a performant manner. This newly created
+	image is often called an 'Atlas'. Hence the name of the library.
 
 # How do I add this library to my project?
-- This library is a single header library which means that you just have to
-#include it into your project. However, you have to add the implementation
-of the functions used into *one* of your C/CPP files. To do this you have
-to add #define K15_IA_IMPLEMENTATION *before* the #include.
+	This library is a single header library which means that you just have to
+	#include it into your project. However, you have to add the implementation
+	of the functions used into *one* of your C/CPP files. To do this you have
+	to add #define K15_IA_IMPLEMENTATION *before* the #include.
 
 # How does this library work?
-- This library does implement the 'Skyline Left-Bottom' packing
-algorithm. I implemented the algorithm roughly using the paper
-'A Skyline-Based Heuristic for the 2D Rectangular Strip Packing Problem'
-by Wei Lijun, Andrew Lim and Wenbin Zhu.
+	This library does implement the 'Skyline Left-Bottom' packing
+	algorithm. I implemented the algorithm roughly using the paper
+	'A Skyline-Based Heuristic for the 2D Rectangular Strip Packing Problem'
+	by Wei Lijun, Andrew Lim and Wenbin Zhu.
 
-To use this library in your project, these are the steps that you should
-you follow:
+	To use this library in your project, these are the steps that you should
+	you follow:
 
-- You create a new image atlas and specify how many images you want to add
-(This is used to determine how much memory needs to be allocated)
+	1. 	You create a new image atlas and specify how many images you want to add
+		(This is used to determine how much memory needs to be allocated)
 
-Function(s) used:
-K15_IACreateAtlas / K15_IACreateAtlasWithCustomMemory
+	Function(s) used:
+	K15_IACreateAtlas / K15_IACreateAtlasWithCustomMemory
 
-Note: This will trigger an allocation (the only one in this library)
-if K15_IACreateAtlas is used. If this is not the desired behavior,
-call K15_IACreateAtlasWithCustomMemory with a memory block that is at
-least the size of N bytes where N is an integer value returned by
-the function K15_IACalculateAtlasMemorySizeInBytes .
-
-
-- You start adding images to populate the atlas. The library
-will directly place the image at it's respected place according
-to the algorithm implemented and will return the position where the
-image has been placed to the caller.
-
-Function(s) used:
-K15_IAAddImageToAtlas
-
-Note: K15_IAAddImageToAtlas does take a pixel format paramter to later
-determine if pixel conversion needs to happen when you want to
-get a copy of the image atlas.
+	Note: 	This will trigger an allocation (the only one in this library)
+			if K15_IACreateAtlas is used. If this is not the desired behavior,
+			call K15_IACreateAtlasWithCustomMemory with a memory block that is at
+			least the size of N bytes where N is an integer value returned by
+			the function K15_IACalculateAtlasMemorySizeInBytes .
 
 
-- After you added all the images to the atlas, you can 'bake' the atlas
-and get a copy of the pixel data of the finished image atlas.
+	2. 	You start adding images to populate the atlas. The library
+		will directly place the image at it's respected place according
+		to the algorithm implemented and will return the position where the
+		image has been placed to the caller.
 
-Function(s) used:
-K15_IABakeImageAtlasIntoPixelBuffer
+	Function(s) used:
+	K15_IAAddImageToAtlas
 
-Note: K15_IABakeImageAtlasIntoPixelBuffer does take a pixel format paramater.
-Pixel format conversion will happen on the fly if the pixel format
-specified differs from that of individual images (that got added
-by using K15_IAAddImageToAtlas). Currently, the atlas
-will only grow by power of two dimensions.
+	Note: 	K15_IAAddImageToAtlas does take a pixel format paramter to later
+			determine if pixel conversion needs to happen when you want to
+			get a copy of the image atlas.
 
-- You delete the image atlas to free previously allocated memory during
-K15_IACreateAtlas.
 
-Function(s) used:
-K15_IAFreeAtlas
+	3.	After you added all the images to the atlas, you can 'bake' the atlas
+		and get a copy of the pixel data of the finished image atlas.
 
-Note: If you did no get a copy of the pixel data of the atlas,
-the data will be lost after calling this function. You basically
-only need to call this function if you created the atlas using
-K15_IACreateAtlas and thus triggered a memory allocation.
+	Function(s) used:
+	K15_IABakeImageAtlasIntoPixelBuffer
 
-If memory was allocated by K15_IA_MALLOC during K15_IACreateAtlas,
-the memory will be freed using K15_IA_FREE.
+	Note: 	K15_IABakeImageAtlasIntoPixelBuffer does take a pixel format paramater.
+			Pixel format conversion will happen on the fly if the pixel format
+			specified differs from that of individual images (that got added
+			by using K15_IAAddImageToAtlas). Currently, the atlas
+			will only grow by power of two dimensions.
+
+	4. 	You delete the image atlas to free previously allocated memory during
+		K15_IACreateAtlas.
+
+	Function(s) used:
+	K15_IAFreeAtlas
+
+	Note: 	If you did no get a copy of the pixel data of the atlas,
+			the data will be lost after calling this function. You basically
+			only need to call this function if you created the atlas using
+			K15_IACreateAtlas and thus triggered a memory allocation.
+
+	If memory was allocated by K15_IA_MALLOC during K15_IACreateAtlas,
+	the memory will be freed using K15_IA_FREE.
 
 # Example Usage
 {
@@ -91,19 +94,19 @@ the memory will be freed using K15_IA_FREE.
 	K15_IACreateAtlas(&atlas, numImagesToAdd);
 
 	for (int imageIndex = 0;
-	imageIndex < numImagesToAdd;
-	++imageIndex)
+		imageIndex < numImagesToAdd;
+		++imageIndex)
 	{
-	unsigned char* imageData = imagesToAdd[imageIndex];
-	int imageWidth = imagesToAddWidths[imageIndex];
-	int imageHeight = imagesToAddHeights[imageIndex];
-	int imagePosX = 0;
-	int imagePosY = 0;
+		unsigned char* imageData = imagesToAdd[imageIndex];
+		int imageWidth = imagesToAddWidths[imageIndex];
+		int imageHeight = imagesToAddHeights[imageIndex];
+		int imagePosX = 0;
+		int imagePosY = 0;
 
-	K15_IAAddImageToAtlas(&atlas, KIA_PIXEL_FORMAT_R8G8B8, imageData,
-	imageWidth, imageHeight, &imagePosX, &imagePosY);
+		K15_IAAddImageToAtlas(&atlas, KIA_PIXEL_FORMAT_R8G8B8, imageData,
+		imageWidth, imageHeight, &imagePosX, &imagePosY);
 
-	//store imagePosX & imagePosY for later use
+		//store imagePosX & imagePosY for later use
 	}
 
 	int imagePixelDataSizeInBytes = K15_IACalculateAtlasPixelDataSizeInBytes(&atlas);
@@ -121,6 +124,13 @@ the memory will be freed using K15_IA_FREE.
 	K15_IAFreeAtlas(&atlas);
 }
 
+# Hints
+	-	If you've got a large amount of images you want to add to an atlas,
+		try increasing the amount of wasted spaces rectangles that are getting
+		tracked (place '#define K15_IA_MAX_WASTED_SPACE_RECTS N' before 
+		including this header - where N is the amount of wasted space rectangles 
+		to track. Default is 512). 
+
 # TODO
 - Merge wasted space areas
 - Allow to create non power of two atlases
@@ -128,9 +138,9 @@ the memory will be freed using K15_IA_FREE.
 - Enable automatic mip map creation (really necessary?)
 
 # License:
-This software is in the public domain. Where that dedication is not
-recognized, you are granted a perpetual, irrevocable license to copy
-and modify this file however you want.
+	This software is in the public domain. Where that dedication is not
+	recognized, you are granted a perpetual, irrevocable license to copy
+	and modify this file however you want.
 */
 
 #ifndef _K15_ImageAtlas_h_
@@ -233,7 +243,8 @@ kia_def void K15_IAFreeAtlas(K15_ImageAtlas* p_ImageAtlas);
 //The position found will be returned to the caller using the p_OutX and p_OutY parameters.
 //Note: Returns one of the following results:
 //			- K15_IA_RESULT_INVALID_ARGUMENTS (p_ImageAtlas is NULL, p_PixelData is NULL or 
-//											   p_PixelDataWith and/or p_PixelDataHeight are invalid)
+//											   p_PixelDataWith and/or p_PixelDataHeight are invalid or
+//											   p_OutX and/or p_OutY are NULL)
 //			- K15_IA_RESULT_ATLAS_TOO_SMALL
 //			- K15_IA_RESULT_TOO_FEW_SKYLINES
 //			- K15_IA_RESULT_OUT_OF_RANGE (Trying to add more images than specified 
@@ -323,12 +334,6 @@ kia_def void K15_IABakeImageAtlasIntoPixelBuffer(K15_ImageAtlas* p_ImageAtlas, K
 # define kia_internal static
 #endif //kia_internal
 
-typedef struct _K15_IAPotentialPosition
-{
-	kia_u32 elementIndex;
-	kia_u32 heuristic;
-} K15_IAPotentialPosition;
-
 typedef struct _K15_IARect
 {
 	kia_u16 posX;
@@ -360,15 +365,6 @@ kia_internal int K15_IASortSkylineByXPos(const void* p_SkylineA, const void* p_S
 	return skylineA->baseLinePosX - skylineB->baseLinePosX;
 }
 /*********************************************************************************/
-kia_internal int K15_IASortPotentialPositionsByHeuristic(const void* p_PositionA,
-	const void* p_PositionB)
-{
-	K15_IAPotentialPosition* posA = (K15_IAPotentialPosition*)p_PositionA;
-	K15_IAPotentialPosition* posB = (K15_IAPotentialPosition*)p_PositionB;
-
-	return posA->heuristic - posB->heuristic;
-}
-/*********************************************************************************/
 
 
 
@@ -379,7 +375,7 @@ kia_internal void K15_IAConvertPixel(kia_u8* p_SourcePixel, kia_u8* p_Destinatio
 	if (p_SourcePixelFormat == KIA_PIXEL_FORMAT_R8)
 	{
 		for (kia_s32 colorIndex = 0;
-		colorIndex < p_DestinationPixelFormat;
+			colorIndex < p_DestinationPixelFormat;
 			++colorIndex)
 		{
 			p_DestinationPixel[colorIndex] = *p_SourcePixel;
@@ -465,7 +461,7 @@ kia_internal kia_result K15_IAConvertPixelData(kia_byte* p_DestinationPixelData,
 
 	//convert pixel by pixel
 	for (kia_u32 pixelIndex = 0;
-	pixelIndex < p_PixelDataStride;
+		pixelIndex < p_PixelDataStride;
 		++pixelIndex)
 	{
 		sourcePixelIndex = pixelIndex * p_SourcePixelFormat;
@@ -523,7 +519,7 @@ kia_internal void K15_IAFindWastedSpaceAndRemoveObscuredSkylines(K15_IASkyline* 
 	K15_IASkyline* skyline = 0;
 
 	for (kia_u32 skylineIndex = 0;
-	skylineIndex < numSkylines;
+		skylineIndex < numSkylines;
 		++skylineIndex)
 	{
 		skyline = p_Skylines + skylineIndex;
@@ -572,7 +568,7 @@ kia_internal kia_u32 K15_IAMergeSkylines(K15_IASkyline* p_Skylines, kia_u32 p_Nu
 	if (numSkylines > 1)
 	{
 		for (kia_u32 skylineIndex = 1;
-		skylineIndex < numSkylines;
+			skylineIndex < numSkylines;
 			++skylineIndex)
 		{
 			skyline = p_Skylines + skylineIndex;
@@ -645,7 +641,7 @@ kia_internal kia_result K15_IATryToGrowAtlasSize(K15_ImageAtlas* p_ImageAtlas)
 
 	//find skylines with pos == 0 (at the very bottom and extend their width)
 	for (kia_u32 skylineIndex = 0;
-	skylineIndex < numSkylines;
+		skylineIndex < numSkylines;
 		++skylineIndex)
 	{
 		K15_IASkyline* skyline = skylines + skylineIndex;
@@ -690,13 +686,13 @@ kia_internal kia_result K15_IATryToGrowAtlasSizeToFit(K15_ImageAtlas* p_ImageAtl
 }
 /*********************************************************************************/
 kia_u32 K15_IACalculatePlacementHeuristic(kia_u32 p_BaseLinePosX, kia_u32 p_BaseLinePosY, kia_u32 p_NodeWidth,
-	kia_u32 p_NodeHeight, K15_IASkyline* p_PlacementSkyline, K15_IASkyline* p_Skylines, kia_u32 p_NumSkylines)
+	kia_u32 p_NodeHeight, K15_IASkyline* p_Skylines, kia_u32 p_NumSkylines)
 {
 	kia_u32 heuristic = 0;
 	K15_IASkyline* skyline = 0;
 
 	for (kia_u32 skylineIndex = 0;
-	skylineIndex < p_NumSkylines;
+		skylineIndex < p_NumSkylines;
 		++skylineIndex)
 	{
 		skyline = p_Skylines + skylineIndex;
@@ -777,21 +773,19 @@ kia_internal kia_u32 K15_IARemoveOrTrimWastedSpaceRect(K15_IARect* p_WastedSpace
 kia_internal kia_b8 K15_IATryToFitInWastedSpace(K15_IARect* p_WastedSpaceRects, kia_u32* p_NumWastedSpaceRectsInOut,
 	K15_IAImageNode* p_NodeToInsert)
 {
-	const kia_u32 maxPotentialPositions = 20;
-	kia_u32 numPotentialPositions = 0;
 	kia_u32 wastedRectWidth = 0;
 	kia_u32 wastedRectHeight = 0;
 	kia_u32 nodeWidth = p_NodeToInsert->rect.width;
 	kia_u32 nodeHeight = p_NodeToInsert->rect.height;
 	kia_u32 numWastedSpaceRects = *p_NumWastedSpaceRectsInOut;
-	kia_b8 fitIntoWastedSpace = K15_IA_FALSE;
+	kia_u32 heuristic = 0;
+	kia_u32 bestHeuristic = ~0;
+	kia_u32 bestFitIndex = ~0;
 
 	K15_IARect* wastedSpaceRect = 0;
-	K15_IAPotentialPosition* potentialPosition = 0;
-	K15_IAPotentialPosition potentialPositions[maxPotentialPositions];
 
 	for (kia_u32 rectIndex = 0;
-	rectIndex < numWastedSpaceRects;
+		rectIndex < numWastedSpaceRects;
 		++rectIndex)
 	{
 		wastedSpaceRect = p_WastedSpaceRects + rectIndex;
@@ -801,38 +795,34 @@ kia_internal kia_b8 K15_IATryToFitInWastedSpace(K15_IARect* p_WastedSpaceRects, 
 		if (wastedRectWidth >= nodeWidth &&
 			wastedRectHeight >= nodeHeight)
 		{
-			potentialPositions[numPotentialPositions].elementIndex = rectIndex;
-			potentialPositions[numPotentialPositions].heuristic = wastedRectWidth * wastedRectHeight;
-			++numPotentialPositions;
+			heuristic = wastedRectWidth * wastedRectHeight;
 
-			fitIntoWastedSpace = K15_IA_TRUE;
-
-			if (numPotentialPositions == maxPotentialPositions)
+			if (heuristic < bestHeuristic)
+			{
+				bestHeuristic = heuristic;
+				bestFitIndex = rectIndex;
+			}
+			
+			//we can't get better than this
+			if (bestHeuristic == 0)
 				break;
 		}
 	}
 
-	if (fitIntoWastedSpace)
+	if (bestFitIndex != ~0)
 	{
-		if (numPotentialPositions > 1)
-		{
-			K15_IA_QSORT(potentialPositions, numPotentialPositions, sizeof(K15_IAPotentialPosition),
-				K15_IASortPotentialPositionsByHeuristic);
-		}
-
-		//use first element from potentialPositions and
 		//copy position
-		wastedSpaceRect = p_WastedSpaceRects + potentialPositions->elementIndex;
+		wastedSpaceRect = p_WastedSpaceRects + bestFitIndex;
 		p_NodeToInsert->rect.posX = wastedSpaceRect->posX;
 		p_NodeToInsert->rect.posY = wastedSpaceRect->posY;
 
 		numWastedSpaceRects = K15_IARemoveOrTrimWastedSpaceRect(p_WastedSpaceRects,
-			numWastedSpaceRects, potentialPositions->elementIndex, nodeWidth, nodeHeight);
+			numWastedSpaceRects, bestFitIndex, nodeWidth, nodeHeight);
 	}
 
 	*p_NumWastedSpaceRectsInOut = numWastedSpaceRects;
 
-	return fitIntoWastedSpace;
+	return (bestFitIndex != ~0);
 }
 /*********************************************************************************/
 kia_internal kia_b8 K15_IACheckCollision(K15_IASkyline* p_Skylines, kia_u32 p_NumSkylines, kia_u32 p_BaseLinePosY,
@@ -871,21 +861,17 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 	kia_u32 height = p_ImageAtlas->height;
 	kia_u32 width = p_ImageAtlas->width;
 	kia_u32 lowerPixelSpace = 0;
-	kia_u32 rightPixelSpace = 0;
 	kia_u32 nodeWidth = p_NodeToInsert->rect.width;
 	kia_u32 nodeHeight = p_NodeToInsert->rect.height;
 	kia_u32 baseLinePosY = 0;
 	kia_u32 baseLinePosX = 0;
 	kia_u32 baseLineWidth = 0;
-	kia_u32 elementsToShift = 0;
-	kia_u32 numPotentialPositions = 0;
-	kia_b8 collidesWithNodes = K15_IA_FALSE;
-
-	const kia_u32 maxPotentialPositions = 128;
+	kia_u32 heuristic = 0;
+	kia_u32 bestHeuristic = ~0;
+	kia_u32 bestFitIndex = ~0;
 
 	K15_IASkyline* skylines = p_ImageAtlas->skylines;
 	K15_IAImageNode* imageNodes = p_ImageAtlas->imageNodes;
-	K15_IAPotentialPosition potentialPositions[maxPotentialPositions];
 	K15_IARect* wastedSpaceRects = p_ImageAtlas->wastedSpaceRects;
 
 	kia_b8 fitsInWastedSpace = K15_IATryToFitInWastedSpace(wastedSpaceRects,
@@ -895,7 +881,7 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 	if (!fitsInWastedSpace)
 	{
 		for (kia_u32 skylineIndex = 0;
-		skylineIndex < numSkylines;
+			skylineIndex < numSkylines;
 			++skylineIndex)
 		{
 			K15_IASkyline* skyline = skylines + skylineIndex;
@@ -929,31 +915,28 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 						baseLinePosY, baseLinePosX, nodeWidth);
 				}
 
-				if (!nodeCollides &&
-					numPotentialPositions != maxPotentialPositions)
+				if (!nodeCollides)
 				{
 					//node potentially fits. Calculate and save heuristic
-					kia_u32 heuristic = K15_IACalculatePlacementHeuristic(baseLinePosX, baseLinePosY, nodeWidth, nodeHeight, skyline, skylines, numSkylines);
-					K15_IAPotentialPosition* potentialPosition = potentialPositions + numPotentialPositions++;
+					heuristic = K15_IACalculatePlacementHeuristic(baseLinePosX, baseLinePosY, 
+						nodeWidth, nodeHeight, skylines, numSkylines);
 
-					potentialPosition->elementIndex = skylineIndex;
-					potentialPosition->heuristic = heuristic;
+					if (heuristic < bestHeuristic)
+					{
+						bestHeuristic = heuristic;
+						bestFitIndex = skylineIndex;
+					}
 
-					//early out when we run out of potential positions to set
-					if (numPotentialPositions == maxPotentialPositions)
+					//we can't get better than this
+					if (bestHeuristic == 0)
 						break;
 				}
 			}
 		}
 
-		if (numPotentialPositions > 1)
-			K15_IA_QSORT(potentialPositions, numPotentialPositions, sizeof(K15_IAPotentialPosition),
-				K15_IASortPotentialPositionsByHeuristic);
-
-		if (numPotentialPositions > 0)
+		if (bestFitIndex != ~0)
 		{
-			K15_IAPotentialPosition* position = potentialPositions;
-			K15_IASkyline* skyline = skylines + position->elementIndex;
+			K15_IASkyline* skyline = skylines + bestFitIndex;
 			p_NodeToInsert->rect.posX = skyline->baseLinePosX;
 			p_NodeToInsert->rect.posY = skyline->baseLinePosY;
 
@@ -965,7 +948,7 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 			else
 			{
 				p_ImageAtlas->numSkylines = K15_IARemoveSkylineByIndex(skylines, numSkylines,
-					position->elementIndex);
+					bestFitIndex);
 			}
 
 			result = K15_IATryToInsertSkyline(p_ImageAtlas, p_NodeToInsert->rect.posY + p_NodeToInsert->rect.height,
@@ -1161,7 +1144,7 @@ kia_def void K15_IABakeImageAtlasIntoPixelBuffer(K15_ImageAtlas* p_ImageAtlas,
 	K15_IAImageNode* imageNode = 0;
 
 	for (kia_u32 nodeIndex = 0;
-	nodeIndex < numImageNodes;
+		nodeIndex < numImageNodes;
 		++nodeIndex)
 	{
 		imageNode = imageNodes + nodeIndex;
@@ -1180,7 +1163,7 @@ kia_def void K15_IABakeImageAtlasIntoPixelBuffer(K15_ImageAtlas* p_ImageAtlas,
 		if (imageNodePixelFormat != p_DestinationPixelFormat)
 		{
 			for (kia_u32 strideIndex = 0;
-			strideIndex < imageNodeHeight;
+				strideIndex < imageNodeHeight;
 				++strideIndex)
 			{
 				K15_IAConvertPixelData(destinationPixelData + destinationPixelDataOffset,
@@ -1194,7 +1177,7 @@ kia_def void K15_IABakeImageAtlasIntoPixelBuffer(K15_ImageAtlas* p_ImageAtlas,
 		else
 		{
 			for (kia_u32 strideIndex = 0;
-			strideIndex < imageNodeHeight;
+				strideIndex < imageNodeHeight;
 				++strideIndex)
 			{
 				K15_IA_MEMCPY(destinationPixelData + destinationPixelDataOffset,
