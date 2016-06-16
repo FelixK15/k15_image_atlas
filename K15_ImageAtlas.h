@@ -131,11 +131,14 @@ K15 Image Atlas v 1.0
 		including this header - where N is the amount of wasted space rectangles 
 		to track. Default is 512). 
 
+	-	Best results can be achieved if the images are sorted prior to adding 
+		them to the atlas.
+
 # TODO
-- Merge wasted space areas
-- Allow to create non power of two atlases
-- Add border per image (really necessary?)
-- Enable automatic mip map creation (really necessary?)
+	- 	Merge wasted space areas
+	- 	Allow to create non power of two atlases
+	- 	Add border per image (really necessary?)
+	- 	Enable automatic mip map creation (really necessary?)
 
 # License:
 	This software is in the public domain. Where that dedication is not
