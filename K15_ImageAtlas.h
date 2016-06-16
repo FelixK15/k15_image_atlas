@@ -141,8 +141,9 @@ K15 Image Atlas v 1.0
 	- 	Enable automatic mip map creation (really necessary?)
 
 # License:
-	This software is in the public domain. You are granted a perpetual, 
-	irrevocable license to copy and modify this file however you want.
+	This software is in the public domain. Where that dedication is not
+	recognized, you are granted a perpetual, irrevocable license to copy
+	and modify this file however you want.
 */
 
 #ifndef _K15_ImageAtlas_h_
@@ -1028,7 +1029,7 @@ kia_def kia_result K15_IACreateAtlasWithCustomMemory(K15_ImageAtlas* p_OutImageA
 	//clear memory
 	K15_IA_MEMSET(p_MemoryBuffer, 0, memoryBufferSizeInBytes);
 
-	K15_ImageAtlas atlas = {};
+	K15_ImageAtlas atlas = {0};
 	atlas.height = K15_IA_DEFAULT_MIN_ATLAS_DIMENSION;
 	atlas.width = K15_IA_DEFAULT_MIN_ATLAS_DIMENSION;
 	atlas.numWastedSpaceRects = 0;
