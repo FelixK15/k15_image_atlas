@@ -141,9 +141,8 @@ K15 Image Atlas v 1.0
 	- 	Enable automatic mip map creation (really necessary?)
 
 # License:
-	This software is in the public domain. Where that dedication is not
-	recognized, you are granted a perpetual, irrevocable license to copy
-	and modify this file however you want.
+	This software is in the public domain. You are granted a perpetual, 
+	irrevocable license to copy and modify this file however you want.
 */
 
 #ifndef _K15_ImageAtlas_h_
