@@ -71,5 +71,5 @@ K15_IAFreeAtlas(&atlas);
 # Results #
 ![extended_ascii_table_arial.png](https://bitbucket.org/repo/RL5dzp/images/2549034388-extended_ascii_table_arial.png) ![icons.png](https://bitbucket.org/repo/RL5dzp/images/3521530839-icons.png)
 # License #
-This software is in the public domain. Where that dedication is not recognized, you are granted a perpetual, irrevocable license to copy
+This software is in the public domain. You are granted a perpetual, irrevocable license to copy
 and modify this file however you want.
