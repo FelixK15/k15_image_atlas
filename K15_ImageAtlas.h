@@ -134,6 +134,9 @@ K15 Image Atlas v 1.0
 	-	Best results can be achieved if the images are sorted prior to adding 
 		them to the atlas.
 
+	-	Currently, the library only produces atlases whose width and height 
+		are power of two.
+
 # TODO
 	- 	Merge wasted space areas
 	- 	Allow to create non power of two atlases
