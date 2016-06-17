@@ -34,7 +34,7 @@ unsigned char* imagesToAdd[numImagesToAdd];
 int imagesToAddWidths[numImagesToAdd];
 int imagesToAddHeights[numImagesToAdd];
 
-K15_IAImageAtlas atlas = {};
+K15_IAImageAtlas atlas = {0};
 K15_IACreateAtlas(&atlas, numImagesToAdd);	
 
 for (int imageIndex = 0;
