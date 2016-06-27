@@ -3,7 +3,7 @@ K15 Image Atlas v 1.0
 	Single header public domain library
 
 # Author(s):
-	Felix Klinge (fklinge dot deck13 dot com)
+	Felix Klinge (f dot klinge15 at gmail dot com)
 
 # Version history
 	1.0 | 6/17/2016		-	Intial release 
