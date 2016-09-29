@@ -7,12 +7,9 @@ This library is a single header library which means that you just have to #inclu
 of the functions used into *one* of your C/CPP files. To do this you have to add **#define K15_IA_IMPLEMENTATION** *before* the #include.  
 
 
-```
-#!c
-...
+```c
 #define K15_IA_IMPLEMENTATION
 #include "K15_ImageAtlas.h"
-...
 ```
 
 # Features
@@ -48,8 +45,7 @@ with your own functions if you like.
 
 Just #define your own functions if you don't want to use the C standard library functions.
 
-```
-#!c
+```c
 #define K15_IA_MALLOC CustomMalloc
 #define K15_IA_FREE CustomFree
 #define K15_IA_IMPLEMENTATION
@@ -66,8 +62,7 @@ However, if you want to try it out, just execute the build.bat script (visual st
 Pressing any key in the example app will add a new rectangle to the atlas.  
 
 # Basic C example #
-```
-#!c
+```c
 const int numImagesToAdd = 256;
 
 //has already been filled
