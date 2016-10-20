@@ -1,152 +1,153 @@
 /*
 K15 Image Atlas v 1.0
-Single header public domain library
+	Single header public domain library
 
 # Author(s):
-Felix Klinge (fklinge dot deck13 dot com)
+	Felix Klinge (fklinge dot deck13 dot com)
 
 # Version history
-1.0 | 6/17/2016		-	Intial release
+	1.0 | 06/17/2016	-	Intial release 
+	1.1 | 10/20/2016	-	Made the source code C89 (so it can be used by C89 only C compiler)
 
 # What problem is this library trying to solve? (ELI5)
-This library can be used to generate a single image that contains
-many, smaller images. The library will try to pack the smaller images
-as tightly as possible in a performant manner. This newly created
-image is often called an 'Atlas'. Hence the name of the library.
+	This library can be used to generate a single image that contains
+	many, smaller images. The library will try to pack the smaller images
+	as tightly as possible in a performant manner. This newly created
+	image is often called an 'Atlas'. Hence the name of the library.
 
 # How do I add this library to my project?
-This library is a single header library which means that you just have to
-#include it into your project. However, you have to add the implementation
-of the functions used into *one* of your C/CPP files. To do this you have
-to add #define K15_IA_IMPLEMENTATION *before* the #include.
+	This library is a single header library which means that you just have to
+	#include it into your project. However, you have to add the implementation
+	of the functions used into *one* of your C/CPP files. To do this you have
+	to add #define K15_IA_IMPLEMENTATION *before* the #include.
 
 # How does this library work?
-This library does implement the 'Skyline Left-Bottom' packing
-algorithm. I implemented the algorithm roughly using the paper
-'A Skyline-Based Heuristic for the 2D Rectangular Strip Packing Problem'
-by Wei Lijun, Andrew Lim and Wenbin Zhu.
+	This library does implement the 'Skyline Left-Bottom' packing
+	algorithm. I implemented the algorithm roughly using the paper
+	'A Skyline-Based Heuristic for the 2D Rectangular Strip Packing Problem'
+	by Wei Lijun, Andrew Lim and Wenbin Zhu.
 
-To use this library in your project, these are the steps that you should
-you follow:
+	To use this library in your project, these are the steps that you should
+	you follow:
 
-1. 	You create a new image atlas and specify how many images you want to add
-(This is used to determine how much memory needs to be allocated)
+	1. 	You create a new image atlas and specify how many images you want to add
+		(This is used to determine how much memory needs to be allocated)
 
-Function(s) used:
-K15_IACreateAtlas / K15_IACreateAtlasWithCustomMemory
+	Function(s) used:
+	K15_IACreateAtlas / K15_IACreateAtlasWithCustomMemory
 
-Note: 	This will trigger an allocation (the only one in this library)
-if K15_IACreateAtlas is used. If this is not the desired behavior,
-call K15_IACreateAtlasWithCustomMemory with a memory block that is at
-least the size of N bytes where N is an integer value returned by
-the function K15_IACalculateAtlasMemorySizeInBytes .
-
-
-2. 	You start adding images to populate the atlas. The library
-will directly place the image at it's respected place according
-to the algorithm implemented and will return the position where the
-image has been placed to the caller.
-
-Function(s) used:
-K15_IAAddImageToAtlas
-
-Note: 	K15_IAAddImageToAtlas does take a pixel format paramter to later
-determine if pixel conversion needs to happen when you want to
-get a copy of the image atlas.
+	Note: 	This will trigger an allocation (the only one in this library)
+			if K15_IACreateAtlas is used. If this is not the desired behavior,
+			call K15_IACreateAtlasWithCustomMemory with a memory block that is at
+			least the size of N bytes where N is an integer value returned by
+			the function K15_IACalculateAtlasMemorySizeInBytes .
 
 
-3.	After you added all the images to the atlas, you can 'bake' the atlas
-and get a copy of the pixel data of the finished image atlas.
+	2. 	You start adding images to populate the atlas. The library
+		will directly place the image at it's respected place according
+		to the algorithm implemented and will return the position where the
+		image has been placed to the caller.
 
-Function(s) used:
-K15_IABakeImageAtlasIntoPixelBuffer
+	Function(s) used:
+	K15_IAAddImageToAtlas
 
-Note: 	K15_IABakeImageAtlasIntoPixelBuffer does take a pixel format paramater.
-Pixel format conversion will happen on the fly if the pixel format
-specified differs from that of individual images (that got added
-by using K15_IAAddImageToAtlas). Currently, the atlas
-will only grow by power of two dimensions.
+	Note: 	K15_IAAddImageToAtlas does take a pixel format paramter to later
+			determine if pixel conversion needs to happen when you want to
+			get a copy of the image atlas.
 
-4. 	You delete the image atlas to free previously allocated memory during
-K15_IACreateAtlas.
 
-Function(s) used:
-K15_IAFreeAtlas
+	3.	After you added all the images to the atlas, you can 'bake' the atlas
+		and get a copy of the pixel data of the finished image atlas.
 
-Note: 	If you did no get a copy of the pixel data of the atlas,
-the data will be lost after calling this function. You basically
-only need to call this function if you created the atlas using
-K15_IACreateAtlas and thus triggered a memory allocation.
+	Function(s) used:
+	K15_IABakeImageAtlasIntoPixelBuffer
 
-If memory was allocated by K15_IA_MALLOC during K15_IACreateAtlas,
-the memory will be freed using K15_IA_FREE.
+	Note: 	K15_IABakeImageAtlasIntoPixelBuffer does take a pixel format paramater.
+			Pixel format conversion will happen on the fly if the pixel format
+			specified differs from that of individual images (that got added
+			by using K15_IAAddImageToAtlas). Currently, the atlas
+			will only grow by power of two dimensions.
+
+	4. 	You delete the image atlas to free previously allocated memory during
+		K15_IACreateAtlas.
+
+	Function(s) used:
+	K15_IAFreeAtlas
+
+	Note: 	If you did no get a copy of the pixel data of the atlas,
+			the data will be lost after calling this function. You basically
+			only need to call this function if you created the atlas using
+			K15_IACreateAtlas and thus triggered a memory allocation.
+
+	If memory was allocated by K15_IA_MALLOC during K15_IACreateAtlas,
+	the memory will be freed using K15_IA_FREE.
 
 # Example Usage
 {
-const int numImagesToAdd = 256;
+	const int numImagesToAdd = 256;
 
-//has already been filled
-unsigned char* imagesToAdd[numImagesToAdd];
-int imagesToAddWidths[numImagesToAdd];
-int imagesToAddHeights[numImagesToAdd];
+	//has already been filled
+	unsigned char* imagesToAdd[numImagesToAdd];
+	int imagesToAddWidths[numImagesToAdd];
+	int imagesToAddHeights[numImagesToAdd];
 
-K15_IAImageAtlas atlas = {};
-K15_IACreateAtlas(&atlas, numImagesToAdd);
+	K15_IAImageAtlas atlas = {};
+	K15_IACreateAtlas(&atlas, numImagesToAdd);
 
-for (int imageIndex = 0;
-imageIndex < numImagesToAdd;
-++imageIndex)
-{
-unsigned char* imageData = imagesToAdd[imageIndex];
-int imageWidth = imagesToAddWidths[imageIndex];
-int imageHeight = imagesToAddHeights[imageIndex];
-int imagePosX = 0;
-int imagePosY = 0;
+	for (int imageIndex = 0;
+		imageIndex < numImagesToAdd;
+		++imageIndex)
+	{
+		unsigned char* imageData = imagesToAdd[imageIndex];
+		int imageWidth = imagesToAddWidths[imageIndex];
+		int imageHeight = imagesToAddHeights[imageIndex];
+		int imagePosX = 0;
+		int imagePosY = 0;
 
-K15_IAAddImageToAtlas(&atlas, KIA_PIXEL_FORMAT_R8G8B8, imageData,
-imageWidth, imageHeight, &imagePosX, &imagePosY);
+		K15_IAAddImageToAtlas(&atlas, KIA_PIXEL_FORMAT_R8G8B8, imageData,
+		imageWidth, imageHeight, &imagePosX, &imagePosY);
 
-//store imagePosX & imagePosY for later use
-}
+		//store imagePosX & imagePosY for later use
+	}
 
-int imagePixelDataSizeInBytes = K15_IACalculateAtlasPixelDataSizeInBytes(&atlas);
-void* imagePixelData = malloc(imagePixelDataSizeInBytes);
+	int imagePixelDataSizeInBytes = K15_IACalculateAtlasPixelDataSizeInBytes(&atlas);
+	void* imagePixelData = malloc(imagePixelDataSizeInBytes);
 
-int width = 0;
-int height = 0;
-K15_IABakeImageAtlasIntoPixelBuffer(&atlas, KIA_PIXEL_FORMAT_R8G8B8, imagePixelData,
-&width, &height);
+	int width = 0;
+	int height = 0;
+	K15_IABakeImageAtlasIntoPixelBuffer(&atlas, KIA_PIXEL_FORMAT_R8G8B8, imagePixelData,
+	&width, &height);
 
-//imagePixelData can be used in combination with imagePosX & imagePosY to
-//identify individual images within the atlas.
+	//imagePixelData can be used in combination with imagePosX & imagePosY to
+	//identify individual images within the atlas.
 
-//free memory
-K15_IAFreeAtlas(&atlas);
+	//free memory
+	K15_IAFreeAtlas(&atlas);
 }
 
 # Hints
--	If you've got a large amount of images you want to add to an atlas,
-try increasing the amount of wasted spaces rectangles that are getting
-tracked (place '#define K15_IA_MAX_WASTED_SPACE_RECTS N' before
-including this header - where N is the amount of wasted space rectangles
-to track. Default is 512).
+	-	If you've got a large amount of images you want to add to an atlas,
+		try increasing the amount of wasted spaces rectangles that are getting
+		tracked (place '#define K15_IA_MAX_WASTED_SPACE_RECTS N' before 
+		including this header - where N is the amount of wasted space rectangles 
+		to track. Default is 512). 
 
--	Best results can be achieved if the images are sorted prior to adding
-them to the atlas.
+	-	Best results can be achieved if the images are sorted prior to adding 
+		them to the atlas.
 
--	Currently, the library only produces atlases whose width and height
-are power of two.
+	-	Currently, the library only produces atlases whose width and height 
+		are power of two.
 
 # TODO
-- 	Merge wasted space areas
-- 	Allow to create non power of two atlases
-- 	Add border per image (really necessary?)
-- 	Enable automatic mip map creation (really necessary?)
+	- 	Merge wasted space areas
+	- 	Allow to create non power of two atlases
+	- 	Add border per image (really necessary?)
+	- 	Enable automatic mip map creation (really necessary?)
 
 # License:
-This software is in the public domain. Where that dedication is not
-recognized, you are granted a perpetual, irrevocable license to copy
-and modify this file however you want.
+	This software is in the public domain. Where that dedication is not
+	recognized, you are granted a perpetual, irrevocable license to copy
+	and modify this file however you want.
 */
 
 #ifndef _K15_ImageAtlas_h_
@@ -812,7 +813,7 @@ kia_internal kia_b8 K15_IATryToFitInWastedSpace(K15_IARect* p_WastedSpaceRects, 
 				bestHeuristic = heuristic;
 				bestFitIndex = rectIndex;
 			}
-
+			
 			//we can't get better than this
 			if (bestHeuristic == 0)
 				break;
@@ -932,7 +933,7 @@ kia_internal kia_result K15_IAAddImageToAtlasSkyline(K15_ImageAtlas* p_ImageAtla
 				if (!nodeCollides)
 				{
 					//node potentially fits. Calculate and save heuristic
-					heuristic = K15_IACalculatePlacementHeuristic(baseLinePosX, baseLinePosY,
+					heuristic = K15_IACalculatePlacementHeuristic(baseLinePosX, baseLinePosY, 
 						nodeWidth, nodeHeight, skylines, numSkylines);
 
 					if (heuristic < bestHeuristic)
@@ -1029,7 +1030,7 @@ kia_def kia_result K15_IACreateAtlas(K15_ImageAtlas* p_OutTextureAtlas, kia_u32 
 kia_def kia_result K15_IACreateAtlasWithCustomMemory(K15_ImageAtlas* p_OutImageAtlas, kia_u32 p_NumImages,
 	void* p_MemoryBuffer)
 {
-	K15_ImageAtlas atlas = { 0 };
+	K15_ImageAtlas atlas = {0};
 
 	kia_byte* memoryBuffer = (kia_byte*)p_MemoryBuffer;
 
